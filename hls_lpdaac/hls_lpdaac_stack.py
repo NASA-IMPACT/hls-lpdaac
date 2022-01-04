@@ -1,24 +1,42 @@
-from aws_cdk import (
-    core as cdk
-    # aws_sqs as sqs,
-)
+from typing import Optional
 
-# For consistency with other languages, `cdk` is the preferred import name for
-# the CDK's core module.  The following line also imports it as `core` for use
-# with examples from the CDK Developer's Guide, which are in the process of
-# being updated to use `cdk`.  You may delete this import if you don't need it.
-from aws_cdk import core
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_lambda_python as lambda_py
+from aws_cdk import core as cdk
 
 
 class HlsLpdaacStack(cdk.Stack):
+    def __init__(
+        self,
+        scope: cdk.Construct,
+        stack_name: str,
+        *,
+        permissions_boundary_arn: Optional[str],
+        **kwargs,
+    ) -> None:
+        super().__init__(scope, stack_name, **kwargs)
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+        if permissions_boundary_arn:
+            iam.PermissionsBoundary.of(self).apply(
+                iam.ManagedPolicy.from_managed_policy_arn(
+                    self, "PermissionsBoundary", permissions_boundary_arn
+                )
+            )
 
-        # The code that defines your stack goes here
+        self.lambda_role = iam.Role(
+            self,
+            "LambdaRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+        )
 
-        # example resource
-        # queue = sqs.Queue(
-        #     self, "HlsLpdaacQueue",
-        #     visibility_timeout=cdk.Duration.seconds(300),
-        # )
+        self.sqs_to_lpdaac_historical_function = lambda_py.PythonFunction(
+            self,
+            id="SqsToLpdaacHistorical",
+            entry="hls_lpdaac/lpdaac/historical",
+            runtime=lambda_.Runtime.PYTHON_3_9,
+            memory_size=128,
+            timeout=cdk.Duration.seconds(3),
+            role=self.lambda_role,
+            environment={},
+        )
