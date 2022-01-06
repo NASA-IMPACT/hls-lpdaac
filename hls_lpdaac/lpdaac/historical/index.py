@@ -1,19 +1,11 @@
 import os
-from typing import Dict, List, Literal, TypedDict
 
 import boto3
+from aws_lambda_typing.context import Context
+from aws_lambda_typing.events import S3Event
 
 
-class S3Object(TypedDict):
-    bucket: Dict[Literal["name"], str]
-    object: Dict[Literal["key"], str]
-
-
-class S3Event(TypedDict):
-    Records: List[Dict[Literal["s3"], S3Object]]
-
-
-def handler(event: S3Event, _):
+def handler(event: S3Event, _: Context):
     s3 = boto3.resource("s3")
     bucket = event["Records"][0]["s3"]["bucket"]["name"]
     key = event["Records"][0]["s3"]["object"]["key"]

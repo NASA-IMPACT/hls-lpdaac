@@ -33,9 +33,10 @@ extras_require = {
     ],
     "dev": [
         *aws_cdk_extras,
+        "aws_lambda_typing",
         "black",
         "boto3",
-        "boto3-stubs[essential]",
+        "boto3-stubs[iam,lambda,s3,sqs]",
         "botocore-stubs",
         "flake8",
         "isort",
