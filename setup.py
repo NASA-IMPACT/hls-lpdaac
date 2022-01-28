@@ -17,6 +17,7 @@ aws_cdk_extras = [
         "aws-lambda",
         "aws-lambda-python",
         "aws-s3",
+        "aws-s3-notifications",
         "aws-sqs",
     ]
 ]

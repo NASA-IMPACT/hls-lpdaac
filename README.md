@@ -14,6 +14,10 @@
 export AWS_PROFILE=<profile name>
 export AWS_REGION=<region>
 export HLS_LPDAAC_STACK=<stack name>
+export HLS_LPDAAC_BUCKET_NAME=<source bucket>
+export HLS_LPDAAC_QUEUE_URL=<destination queue>
+
+# Optional
 export HLS_LPDAAC_PERMISSIONS_BOUNDARY_ARN=<arn>
 ```
 
