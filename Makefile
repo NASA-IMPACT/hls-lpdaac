@@ -7,15 +7,11 @@ tox:
 
 # NOTE: Intended only for use from tox.ini.
 #
-# Install Node.js within the tox venv, if it is not already installed there
-# or if what is already installed there is not the correct version, as specified
-# in the .nvmrc file.
-install-node: tox
+# Install Node.js within the tox virtualenv, if it is not already installed.
+install-node:
 	node_path=$$(builtin type -P node) && \
-	actual_version=$$(node --version 2>/dev/null) && \
-	expected_version=$$(<"$${PWD}/.nvmrc") && \
-	if ! [[ "$${node_path}" =~ ^$${TOX_ENV_DIR} && "$${actual_version}" =~ $${expected_version} ]]; then \
-	  nodeenv --node="$${expected_version}" -p; \
+	if ! [[ "$${node_path}" =~ ^$${TOX_ENV_DIR} ]]; then \
+	  nodeenv --config-file .nodeenvrc --python-virtualenv; \
 	fi
 
 # NOTE: Intended only for use from tox.ini.
