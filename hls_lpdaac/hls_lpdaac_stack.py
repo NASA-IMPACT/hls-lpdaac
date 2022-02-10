@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 from aws_cdk import aws_iam as iam
@@ -17,10 +16,9 @@ class HlsLpdaacStack(cdk.Stack):
         *,
         bucket_name: str,
         queue_url: str,
-        permissions_boundary_arn: Optional[str],
-        **kwargs,
+        permissions_boundary_arn: Optional[str] = None,
     ) -> None:
-        super().__init__(scope, stack_name, **kwargs)
+        super().__init__(scope, stack_name)
 
         if permissions_boundary_arn:
             iam.PermissionsBoundary.of(self).apply(
@@ -38,15 +36,15 @@ class HlsLpdaacStack(cdk.Stack):
 
         self.sqs_to_lpdaac_historical_function = lambda_py.PythonFunction(
             self,
-            id="SqsToLpdaacHistorical",
+            "SqsToLpdaacHistorical",
             entry="hls_lpdaac/lpdaac/historical",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            index="index.py",
+            handler="handler",
+            runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
             memory_size=128,
             timeout=cdk.Duration.seconds(3),
-            role=self.lambda_role,
-            environment=dict(
-                QUEUE_URL=queue_url,
-            ),
+            role=self.lambda_role,  # type: ignore
+            environment=dict(QUEUE_URL=queue_url),
         )
 
         self.bucket = s3.Bucket.from_bucket_name(
@@ -54,6 +52,6 @@ class HlsLpdaacStack(cdk.Stack):
         )
 
         self.bucket.add_object_created_notification(
-            s3n.LambdaDestination(self.sqs_to_lpdaac_historical_function),
+            s3n.LambdaDestination(self.sqs_to_lpdaac_historical_function),  # type: ignore
             s3.NotificationKeyFilter(suffix=".v2.0.json"),
         )
