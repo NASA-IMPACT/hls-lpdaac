@@ -3,11 +3,8 @@ from typing import List
 
 from setuptools import find_packages, setup  # type: ignore
 
-with open(os.path.join(os.environ.get("PWD", "."), ".cdk-version"), "r") as f:
-    aws_cdk_version = f.read()
-
 aws_cdk_extras = [
-    f"aws_cdk.{aws_cdk_package}=={aws_cdk_version}"
+    f"aws_cdk.{aws_cdk_package}<2"
     for aws_cdk_package in [
         "core",
         "assertions",
