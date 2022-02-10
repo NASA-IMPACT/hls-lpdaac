@@ -21,29 +21,31 @@ aws_cdk_extras = [
 
 install_requires: List[str] = []
 
+extras_require_test = [
+    *aws_cdk_extras,
+    "flake8",
+    "black",
+    "boto3",
+    "moto[s3,sqs]",
+    "pytest-cov",
+    "pytest",
+]
+
+extras_require_dev = [
+    *extras_require_test,
+    "aws_lambda_typing",
+    "boto3-stubs[iam,lambda,s3,sqs]",
+    "botocore-stubs",
+    "isort",
+    "mypy",
+    "nodeenv",
+    "pre-commit",
+    "pre-commit-hooks",
+]
+
 extras_require = {
-    "test": [
-        *aws_cdk_extras,
-        "flake8",
-        "black",
-        "pytest-cov",
-        "pytest",
-    ],
-    "dev": [
-        *aws_cdk_extras,
-        "aws_lambda_typing",
-        "black",
-        "boto3",
-        "boto3-stubs[iam,lambda,s3,sqs]",
-        "botocore-stubs",
-        "flake8",
-        "isort",
-        "mypy",
-        "nodeenv",
-        "pre-commit",
-        "pre-commit-hooks",
-        "pytest",
-    ],
+    "test": extras_require_test,
+    "dev": extras_require_dev,
 }
 
 setup(
