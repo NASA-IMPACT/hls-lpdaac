@@ -1,4 +1,10 @@
 {
+  "deepscan.enable": true,
   "python.formatting.provider": "black",
-  "deepscan.enable": true
+  "python.linting.mypyEnabled": true,
+  "python.linting.enabled": true,
+  "python.linting.mypyArgs": [
+    "--show-column-numbers"
+  ],
+  "python.analysis.typeCheckingMode": "basic"
 }
