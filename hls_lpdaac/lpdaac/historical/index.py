@@ -17,9 +17,9 @@ def handler(event: "S3Event", _: "Context") -> None:
 # Enables unit testing without the need to monkeypatch `os.environ` (which would
 # be necessary to test `handler` above).
 def _handler(event: "S3Event", queue_url: str) -> None:
-    s3_object = event["Records"][0]["s3"]
+    s3_object = event["Records"][0]["s3"]  # type: ignore
     bucket = s3_object["bucket"]["name"]
-    key = s3_object["object"]["key"]
+    key = s3_object["object"]["key"]  # type: ignore
 
     message = s3.Object(bucket, key).get()["Body"].read().decode("utf-8")
 
