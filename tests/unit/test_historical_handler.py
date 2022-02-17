@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 def test_lpdaac_historical_handler(
     s3_event: "S3Event", s3_object: "Object", sqs_queue: "Queue"
 ) -> None:
-    from hls_lpdaac.lpdaac.historical.index import _handler as handler
+    from hls_lpdaac.lpdaac.historical.index import _handler
 
-    handler(s3_event, sqs_queue.url)
+    _handler(s3_event, sqs_queue.url)
     messages = sqs_queue.receive_messages()
     expected_message = s3_object.get()["Body"].read().decode("utf-8")
 
