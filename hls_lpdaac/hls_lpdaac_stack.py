@@ -2,7 +2,6 @@ from typing import Optional
 
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
-from aws_cdk import aws_lambda_python as lambda_py
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_notifications as s3n
 from aws_cdk import aws_sqs as sqs
@@ -43,12 +42,11 @@ class HlsLpdaacStack(cdk.Stack):
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
         )
 
-        self.lpdaac_historical_lambda = lambda_py.PythonFunction(
+        self.lpdaac_historical_lambda = lambda_.Function(
             self,
             "LpdaacHistoricalLambda",
-            entry="hls_lpdaac/lpdaac/historical",
-            index="index.py",
-            handler="handler",
+            code=lambda_.Code.from_asset("hls_lpdaac/lpdaac/historical"),
+            handler="index.handler",
             runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
             memory_size=128,
             timeout=cdk.Duration.seconds(30),
