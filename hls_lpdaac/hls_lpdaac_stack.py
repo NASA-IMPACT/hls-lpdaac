@@ -49,7 +49,7 @@ class HlsLpdaacStack(cdk.Stack):
             handler="handler",
             runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
             memory_size=128,
-            timeout=cdk.Duration.seconds(3),
+            timeout=cdk.Duration.seconds(30),
             role=self.lpdaac_historical_role,  # type: ignore
             environment=dict(QUEUE_URL=queue_url),
         )
