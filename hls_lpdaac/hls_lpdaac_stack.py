@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_lambda_python as lambda_py
@@ -24,7 +26,7 @@ class HlsLpdaacStack(cdk.Stack):
         *,
         bucket_name: str,
         queue_url: str,
-        permissions_boundary_arn: str = None,
+        permissions_boundary_arn: Optional[str] = None,
     ) -> None:
         super().__init__(scope, stack_name)
 

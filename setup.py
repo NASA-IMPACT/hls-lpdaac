@@ -41,6 +41,7 @@ extras_require_dev = [
     "nodeenv",
     "pre-commit",
     "pre-commit-hooks",
+    "pyright",
 ]
 
 extras_require = {
