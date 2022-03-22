@@ -1,0 +1,26 @@
+# Install Python dependencies, run tests, and lint with a single version of Python.
+# See https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: HLS LPDAAC Historical
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
+      run: |
+        pip install tox
+    - name: Run tests
+      run: |
+        tox -e py
