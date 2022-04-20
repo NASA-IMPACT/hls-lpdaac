@@ -36,12 +36,6 @@ class HlsLpdaacStack(cdk.Stack):
                 )
             )
 
-        self.lpdaac_historical_role = iam.Role(
-            self,
-            "LpdaacHistoricalRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-        )
-
         self.lpdaac_historical_lambda = lambda_.Function(
             self,
             "LpdaacHistoricalLambda",
@@ -50,20 +44,19 @@ class HlsLpdaacStack(cdk.Stack):
             runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
             memory_size=128,
             timeout=cdk.Duration.seconds(30),
-            role=self.lpdaac_historical_role,  # type: ignore
             environment=dict(QUEUE_URL=queue_url),
         )
 
         self.lpdaac_historical_bucket = s3.Bucket.from_bucket_name(
             self, "LpdaacHistoricalBucket", bucket_name
         )
-        self.lpdaac_historical_bucket.grant_read(self.lpdaac_historical_role)
+        self.lpdaac_historical_bucket.grant_read(self.lpdaac_historical_lambda)
 
         queue_arn = queue_arn_from_url(queue_url)
         self.lpdaac_historical_queue = sqs.Queue.from_queue_arn(
             self, "LpdaacHistoricalQueue", queue_arn=queue_arn
         )
-        self.lpdaac_historical_queue.grant_send_messages(self.lpdaac_historical_role)
+        self.lpdaac_historical_queue.grant_send_messages(self.lpdaac_historical_lambda)
 
         self.lpdaac_historical_bucket.add_object_created_notification(
             s3n.LambdaDestination(self.lpdaac_historical_lambda),  # type: ignore
