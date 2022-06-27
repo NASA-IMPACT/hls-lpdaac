@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 from setuptools import find_packages, setup  # type: ignore
@@ -34,7 +33,7 @@ extras_require_test = [
 extras_require_dev = [
     *extras_require_test,
     "aws_lambda_typing",
-    "boto3-stubs[iam,lambda,s3,sqs]",
+    "boto3-stubs[iam,lambda,s3,sqs,ssm]",
     "botocore-stubs",
     "isort",
     "mypy",
@@ -54,7 +53,8 @@ setup(
     version="0.0.1",
     python_requires=">=3.9",
     author="Development Seed",
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     package_data={
         ".": [
             "cdk.json",
