@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -7,10 +9,12 @@ if TYPE_CHECKING:
 
 
 def test_lpdaac_historical_handler(
-    s3_event: "S3Event",
-    s3_object: "Object",
-    sqs_queue: "Queue",
+    s3_event: S3Event,
+    s3_object: Object,
+    sqs_queue: Queue,
 ) -> None:
+    # Import here (rather than at top level) to ensure AWS mocks are established.
+    # See http://docs.getmoto.org/en/latest/docs/getting_started.html#what-about-those-pesky-imports
     from hls_lpdaac.historical.index import _handler
 
     _handler(s3_event, sqs_queue.url)
