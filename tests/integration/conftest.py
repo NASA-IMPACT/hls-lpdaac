@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import boto3
@@ -11,20 +13,20 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def lambda_() -> "LambdaClient":
+def lambda_() -> LambdaClient:
     return boto3.client("lambda")
 
 
 @pytest.fixture
-def s3() -> "S3ServiceResource":
+def s3() -> S3ServiceResource:
     return boto3.resource("s3")
 
 
 @pytest.fixture
-def sqs() -> "SQSServiceResource":
+def sqs() -> SQSServiceResource:
     return boto3.resource("sqs")
 
 
 @pytest.fixture
-def ssm() -> "SSMClient":
+def ssm() -> SSMClient:
     return boto3.client("ssm")
