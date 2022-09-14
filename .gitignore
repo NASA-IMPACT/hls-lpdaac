@@ -3,6 +3,7 @@
 ### CDK ###
 *.swp
 package-lock.json
+cdk.context.json
 
 # CDK asset staging directory
 .cdk.staging

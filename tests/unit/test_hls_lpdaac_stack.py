@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
-from aws_cdk import assertions
 from aws_cdk import core as cdk
+from aws_cdk.assertions import Match, Template
 
-from hls_lpdaac.hls_lpdaac_stack import HlsLpdaacStack
+from cdk.stacks import HlsLpdaacStack
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket
@@ -16,11 +17,28 @@ def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
         app,
         "hls-lpdaac",
         bucket_name=s3_bucket.name,
-        queue_url=sqs_queue.url,
+        queue_arn=sqs_queue.attributes["QueueArn"],
     )
 
-    template = assertions.Template.from_stack(stack)
+    template = Template.from_stack(stack)
+
+    # This is ugly, but is currently necessary until (if ever) the CDK provides
+    # a more convenient means for matching expected values against unresolved
+    # Cfn intrinsic functions.  In this case, the queue URL is not a string
+    # value, but rather an unresolved occurrence of the Fn::Join intrinsic
+    # function, and the only argument we can reliably match against is the
+    # object {"Ref": "AWS::URLSuffix"}.
+    #
+    # See https://github.com/aws/aws-cdk/issues/17938
+
+    path = urlparse(sqs_queue.url).path
+    args = Match.array_with([Match.array_with([Match.string_like_regexp(f"{path}$")])])
+
     template.has_resource_properties(
         "AWS::Lambda::Function",
-        dict(Environment=dict(Variables=dict(QUEUE_URL=sqs_queue.url))),
+        {
+            "Environment": {
+                "Variables": {"QUEUE_URL": Match.object_like({"Fn::Join": args})}
+            }
+        },
     )
