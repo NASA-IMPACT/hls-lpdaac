@@ -20,7 +20,7 @@ tox:
 # NOTE: Intended only for use from tox.ini.
 # Install Node.js within the tox virtualenv.
 install-node: tox
-	nodeenv --node 16.17.0 --python-virtualenv
+	type node 2>/dev/null || nodeenv --node 16.17.0 --python-virtualenv
 
 # NOTE: Intended only for use from tox.ini
 # Install the CDK CLI within the tox virtualenv.
@@ -31,40 +31,40 @@ install-cdk: tox install-node
 
 ## unit-tests: Run unit tests
 unit-tests:
-	tox -v -r
+	tox -v
 
 ## integration-tests: Run integration tests (requires ci-deploy)
 integration-tests:
-	tox -v -e integration -r
+	tox -v -e integration
 
 ## synth: Run CDK synth
 synth:
-	tox -v -e dev -r -- synth '*' --app cdk/app.py
+	tox -v -e dev -- synth '*' --app cdk/app.py
 
 ## deploy: Run CDK deploy
 deploy:
-	tox -v -e dev -r -- deploy '*' --app cdk/app.py --progress events --require-approval never
+	tox -v -e dev -- deploy '*' --app cdk/app.py --progress events --require-approval never
 
 ## diff: Run CDK diff
 diff:
-	tox -v -e dev -r -- diff '*' --app cdk/app.py
+	tox -v -e dev -- diff '*' --app cdk/app.py
 
 ## destroy: Run CDK destroy
 destroy:
-	tox -v -e dev -r -- destroy --force '*' --app cdk/app.py --progress events
+	tox -v -e dev -- destroy --force '*' --app cdk/app.py --progress events
 
 ## ci-synth: Run CDK synth for integration stack
 ci-synth:
-	tox -v -e dev -r -- deploy '*' --app cdk/app_ci.py
+	tox -v -e dev -- deploy '*' --app cdk/app_ci.py
 
 ## ci-deploy: Run CDK deploy for integration stack
 ci-deploy:
-	tox -v -e dev -r -- deploy '*' --app cdk/app_ci.py --progress events --require-approval never
+	tox -v -e dev -- deploy '*' --app cdk/app_ci.py --progress events --require-approval never
 
 ## ci-diff: Run CDK diff for integration stack
 ci-diff:
-	tox -v -e dev -r -- diff '*' --app cdk/app_ci.py
+	tox -v -e dev -- diff '*' --app cdk/app_ci.py
 
 ## ci-destroy: Run CDK destroy for integration stack
 ci-destroy:
-	tox -v -e dev -r -- destroy --force '*' --app cdk/app_ci.py --progress events
+	tox -v -e dev -- destroy --force '*' --app cdk/app_ci.py --progress events
