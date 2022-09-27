@@ -5,22 +5,66 @@ name: HLS LPDAAC Historical
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - develop
+    paths:
+      - 'cdk/**'
+      - 'src/**'
+      - 'cdk.json'
+      - 'Makefile'
+      - 'setup.py'
+      - 'tox.ini'
   pull_request:
-    branches: [ main ]
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - main
+      - develop
+    paths:
+      - 'cdk/**'
+      - 'src/**'
+      - 'cdk.json'
+      - 'Makefile'
+      - 'setup.py'
+      - 'tox.ini'
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  unit-tests:
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.9"
-    - name: Install dependencies
-      run: |
-        pip install tox
-    - name: Run tests
-      run: |
-        tox -e py
+      - name: Checkout source
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          pip install tox
+      - name: Run unit tests
+        run: make unit-tests
+
+  deploy-dev:
+    # Run only on NON-main branches
+    if: github.event.ref != 'refs/heads/main'
+    needs: unit-tests
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: dev
+    secrets: inherit
+
+  deploy-prod:
+    # Run only on main branch (on push, including on merged PRs)
+    if: github.event.ref == 'refs/heads/main'
+    needs: unit-tests
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod
+    secrets: inherit
