@@ -1,12 +1,11 @@
 CDK_VERSION=1.176.0
 NODE_VERSION=16.17.1
 RECREATE=
-SHELL = /usr/bin/env bash
+SHELL=/usr/bin/env bash
 VENV_TOX_LOG_LOCK=.venv/log/.lock
 
 .PHONY: help
 .DEFAULT_GOAL := help
-.SHELLFLAGS = -e
 
 help: Makefile
 	@echo

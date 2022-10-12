@@ -42,7 +42,7 @@ defaults:
     shell: bash
 
 jobs:
-  define-constants:
+  constants:
     # This is a hack to work around the lack of support for two other possiblities for
     # avoiding duplication of configuration values:
     #
@@ -74,7 +74,8 @@ jobs:
         run: |
           pip install "tox>=${{ needs.constants.outputs.TOX_MIN_VERSION }}"
       - name: Run unit tests
-        run: make unit-tests
+        run: |
+          make unit-tests
 
   integration-tests:
     if: >-
