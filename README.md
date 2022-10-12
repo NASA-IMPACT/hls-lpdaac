@@ -12,8 +12,12 @@
 ## Environment Settings
 
 ```plain
-# AWS_PROFILE (or id, key, and token) required only when running locally
+# AWS_PROFILE (if running locally) or key, id, and possibly token
 export AWS_PROFILE=<profile name>
+# -- OR ---
+export AWS_ACCESS_KEY_ID=<id>
+export AWS_SECRET_ACCESS_KEY=<key>
+export AWS_SESSION_TOKEN=<token>
 
 export AWS_DEFAULT_REGION=us-west-2
 export HLS_LPDAAC_BUCKET_NAME=<source bucket name>
@@ -64,11 +68,11 @@ For active stack development run
 tox -e dev -r -- version
 ```
 
-This creates a local virtualenv in the directory `.venv-dev`.
+This creates a local virtualenv in the directory `.venv`.
 To use it for development:
 
 ```plain
-source .venv-dev/bin/activate
+source .venv/bin/activate
 ```
 
 Install pre-commit hooks:
@@ -112,7 +116,7 @@ Create an EC2 instance:
 - **Security group:** `launch-wizard-1` (`sg-0e915c4a88d790e96`), which allows SSH
 - **Advanced details > IAM instance profile:** `hls-stack-deploy`
 
-Once the instance if ready, connect to it via either Session Manager or SSH, and run
+Once the instance is ready, connect to it via either Session Manager or SSH, and run
 the following commands to install the required packages:
 
 ```plain
