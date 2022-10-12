@@ -41,24 +41,38 @@ defaults:
   run:
     shell: bash
 
-env:
-  PYTHON_VERSION: "3.9"
-  # `allowlist_externals` introduced in tox 3.18.0 (deprecating `whitelist_externals`)
-  TOX_MIN_VERSION: "3.18.0"
-
 jobs:
+  define-constants:
+    # This is a hack to work around the lack of support for two other possiblities for
+    # avoiding duplication of configuration values:
+    #
+    # (1) YAML anchors (https://yaml.org/spec/1.1/current.html#id899912) and aliases
+    #     (https://yaml.org/spec/1.1/current.html#id902561)
+    # (2) Availability of `env` context within `jobs.<job-id>.with.<with-id>` (see
+    #     https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability)
+    #
+    # Alternative hack: https://github.com/actions/runner/issues/1182#issuecomment-1262870831
+    runs-on: ubuntu-20.04
+    outputs:
+      PYTHON_VERSION: "3.9"
+      TOX_MIN_VERSION: "3.18.0"  # `allowlist_externals` replaces `whitelist_externals`
+    steps:
+      - name: Define constants
+        run: ""  # Nothing to do, but at least one step is required
+
   unit-tests:
     runs-on: ubuntu-20.04
+    needs: constants
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "${{ env.PYTHON_VERSION }}"
+          python-version: "${{ needs.constants.outputs.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
-          pip install "tox>=${{ env.TOX_MIN_VERSION }}"
+          pip install "tox>=${{ needs.constants.outputs.TOX_MIN_VERSION }}"
       - name: Run unit tests
         run: make unit-tests
 
@@ -68,17 +82,19 @@ jobs:
       (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')) ||
       (github.event_name == 'release')
     runs-on: ubuntu-20.04
-    needs: unit-tests
+    needs:
+      - constants
+      - unit-tests
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "${{ env.PYTHON_VERSION }}"
+          python-version: "${{ needs.constants.outputs.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
-          pip install "tox>=${{ env.TOX_MIN_VERSION }}"
+          pip install "tox>=${{ needs.constants.outputs.TOX_MIN_VERSION }}"
       - name: Run integration tests
         run: |
           make ci-deploy
@@ -89,21 +105,25 @@ jobs:
   deploy-dev:
     # Deploy to Dev only on push (including merged PR) to `develop` branch
     if: github.event_name == 'push' && github.event.ref == 'refs/heads/develop'
-    needs: integration-tests
+    needs:
+      - constants
+      - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
       environment: dev
-      PYTHON_VERSION: "${{ env.PYTHON_VERSION }}"
-      TOX_MIN_VERSION: "${{ env.TOX_MIN_VERSION }}"
+      PYTHON_VERSION: "${{ needs.constants.outputs.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ needs.constants.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
 
   deploy-prod:
     # Deploy to Prod only on publishing a release (tag) on `main` branch
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: integration-tests
+    needs:
+      - constants
+      - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod
-      PYTHON_VERSION: "${{ env.PYTHON_VERSION }}"
-      TOX_MIN_VERSION: "${{ env.TOX_MIN_VERSION }}"
+      PYTHON_VERSION: "${{ needs.constants.outputs.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ needs.constants.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
