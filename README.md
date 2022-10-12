@@ -61,7 +61,7 @@ make destroy
 For active stack development run
 
 ```plain
-tox -e dev -- version
+tox -e dev -r -- version
 ```
 
 This creates a local virtualenv in the directory `.venv-dev`.
