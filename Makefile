@@ -1,4 +1,6 @@
-SHELL=/usr/bin/env bash
+CDK_VERSION=1.176.0
+NODE_VERSION=16.17.1
+SHELL = /usr/bin/env bash
 
 .PHONY: help tox
 .DEFAULT_GOAL := help
@@ -20,12 +22,18 @@ tox:
 # NOTE: Intended only for use from tox.ini.
 # Install Node.js within the tox virtualenv.
 install-node: tox
-	type node 2>/dev/null || nodeenv --node 16.17.0 --python-virtualenv
+	# Install node in the virtualenv, if it's not installed or it's the wrong version.
+	if [[ ! $$(type node 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(node -v) =~ $(NODE_VERSION) ]]; then \
+	    nodeenv --node $(NODE_VERSION) --python-virtualenv; \
+	fi
 
 # NOTE: Intended only for use from tox.ini
 # Install the CDK CLI within the tox virtualenv.
 install-cdk: tox install-node
-	npm install --location global "aws-cdk@1.x"
+	# Install cdk in the virtualenv, if it's not installed or it's the wrong version.
+	if [[ ! $$(type cdk 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(cdk --version) =~ $(CDK_VERSION) ]]; then \
+	    npm install --location global "aws-cdk@$(CDK_VERSION)"; \
+	fi
   	# Acknowledge CDK notice regarding CDK v1 being in maintenance mode.
 	grep -q 19836 cdk.context.json 2>/dev/null || cdk acknowledge 19836
 
