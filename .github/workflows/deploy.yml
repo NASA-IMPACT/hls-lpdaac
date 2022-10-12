@@ -7,6 +7,12 @@ on:
       environment:
         required: true
         type: string
+      PYTHON_VERSION:
+        required: true
+        type: string
+      TOX_MIN_VERSION:
+        required: true
+        type: string
 
 defaults:
   run:
@@ -25,10 +31,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9"
+          python-version: "${{ inputs.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
-          pip install tox
+          pip install "tox>=${{ inputs.TOX_MIN_VERSION }}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:

@@ -35,6 +35,11 @@ defaults:
   run:
     shell: bash
 
+env:
+  PYTHON_VERSION: "3.9"
+  # `allowlist_externals` introduced in tox 3.18.0 (deprecating `whitelist_externals`)
+  TOX_MIN_VERSION: "3.18.0"
+
 jobs:
   unit-tests:
     runs-on: ubuntu-20.04
@@ -44,10 +49,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9"
+          python-version: "${{ env.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
-          pip install tox
+          pip install "tox>=${{ env.TOX_MIN_VERSION }}"
       - name: Run unit tests
         run: make unit-tests
 
@@ -58,6 +63,8 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: dev
+      PYTHON_VERSION: "${{ env.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ env.TOX_MIN_VERSION }}"
     secrets: inherit
 
   deploy-prod:
@@ -67,4 +74,6 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod
+      PYTHON_VERSION: "${{ env.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ env.TOX_MIN_VERSION }}"
     secrets: inherit
