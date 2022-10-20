@@ -42,7 +42,7 @@ defaults:
     shell: bash
 
 jobs:
-  constants:
+  config:
     # This is a hack to work around the lack of support for two other possiblities for
     # avoiding duplication of configuration values:
     #
@@ -57,47 +57,40 @@ jobs:
       PYTHON_VERSION: "3.9"
       TOX_MIN_VERSION: "3.18.0"  # `allowlist_externals` replaces `whitelist_externals`
     steps:
-      - name: Define constants
+      - name: Configure shared values
         run: ""  # Nothing to do, but at least one step is required
 
   unit-tests:
     runs-on: ubuntu-22.04
-    needs: constants
+    needs: config
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "${{ needs.constants.outputs.PYTHON_VERSION }}"
+          python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
-          pip install "tox>=${{ needs.constants.outputs.TOX_MIN_VERSION }}"
+          pip install "tox>=${{ needs.config.outputs.TOX_MIN_VERSION }}"
       - name: Run unit tests
         run: |
           make unit-tests
 
   integration-tests:
-    if: >-
-      (github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == 'main')) ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')) ||
-      (github.event_name == 'release')
     runs-on: ubuntu-22.04
-    # TODO: Always using "dev" okay for now, but set to "prod" when appropriate
     environment: dev
-    needs:
-      - constants
-      - unit-tests
+    needs: config
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "${{ needs.constants.outputs.PYTHON_VERSION }}"
+          python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
       - name: Install dependencies
         run: |
-          pip install "tox>=${{ needs.constants.outputs.TOX_MIN_VERSION }}"
+          pip install "tox>=${{ needs.config.outputs.TOX_MIN_VERSION }}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -116,24 +109,26 @@ jobs:
     # Deploy to Dev only on push (including merged PR) to `develop` branch
     if: github.event_name == 'push' && github.event.ref == 'refs/heads/develop'
     needs:
-      - constants
+      - config
+      - unit-tests
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
       environment: dev
-      PYTHON_VERSION: "${{ needs.constants.outputs.PYTHON_VERSION }}"
-      TOX_MIN_VERSION: "${{ needs.constants.outputs.TOX_MIN_VERSION }}"
+      PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
 
   deploy-prod:
     # Deploy to Prod only on publishing a release (tag) on `main` branch
     if: github.event_name == 'release' && github.event.action == 'published'
     needs:
-      - constants
+      - config
+      - unit-tests
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod
-      PYTHON_VERSION: "${{ needs.constants.outputs.PYTHON_VERSION }}"
-      TOX_MIN_VERSION: "${{ needs.constants.outputs.TOX_MIN_VERSION }}"
+      PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
