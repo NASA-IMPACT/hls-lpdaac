@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      PYTHON_VERSION:
+        required: true
+        type: string
+      TOX_MIN_VERSION:
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "${{ inputs.PYTHON_VERSION }}"
+      - name: Install dependencies
+        run: |
+          pip install "tox>=${{ inputs.TOX_MIN_VERSION }}"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Export secrets as environment variables
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        run: |
+          while read -rd $'' line
+          do
+            echo "$line" >> $GITHUB_ENV
+          done < <(jq -r <<<"$SECRETS_CONTEXT" \
+            'to_entries|map("\(.key)=\(.value)\u0000")[]')
+      - name: Deploy to ${{ inputs.environment }}
+        run: make deploy
