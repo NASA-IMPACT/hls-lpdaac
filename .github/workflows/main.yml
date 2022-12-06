@@ -37,6 +37,11 @@ on:
       - 'setup.py'
       - 'tox.ini'
 
+# See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services#updating-your-github-actions-workflow
+permissions:
+  id-token: write # required for requesting the JWT
+  contents: read  # required for actions/checkout
+
 defaults:
   run:
     shell: bash
@@ -94,9 +99,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_OIDC_ROLE_NAME }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
       - name: Run integration tests
         run: |
