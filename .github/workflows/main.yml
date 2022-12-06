@@ -4,6 +4,7 @@
 name: HLS LPDAAC Historical
 
 on:
+  workflow_dispatch:
   release:
     types:
       - published
