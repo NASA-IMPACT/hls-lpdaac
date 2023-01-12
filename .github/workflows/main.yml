@@ -84,6 +84,10 @@ jobs:
           make unit-tests
 
   integration-tests:
+    # Run integration tests only on "push" or "release", which means only on
+    # `develop` or `main` branches, because the OIDC role in MCP trusts only
+    # those 2 branches.
+    if: github.event_name == 'push' || github.event_name == 'release'
     runs-on: ubuntu-22.04
     environment: dev
     needs: config
