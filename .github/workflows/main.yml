@@ -4,6 +4,7 @@
 name: HLS LPDAAC Historical
 
 on:
+  workflow_dispatch:
   release:
     types:
       - published
@@ -36,6 +37,11 @@ on:
       - 'Makefile'
       - 'setup.py'
       - 'tox.ini'
+
+# See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services#updating-your-github-actions-workflow
+permissions:
+  id-token: write # required for requesting the JWT
+  contents: read  # required for actions/checkout
 
 defaults:
   run:
@@ -78,6 +84,10 @@ jobs:
           make unit-tests
 
   integration-tests:
+    # Run integration tests only on "push" or "release", which means only on
+    # `develop` or `main` branches, because the OIDC role in MCP trusts only
+    # those 2 branches.
+    if: github.event_name == 'push' || github.event_name == 'release'
     runs-on: ubuntu-22.04
     environment: dev
     needs: config
@@ -94,9 +104,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
       - name: Run integration tests
         run: |

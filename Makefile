@@ -1,7 +1,10 @@
+# CDK version must match the version specified in setup.py
 CDK_VERSION=1.176.0
 NODE_VERSION=16.17.1
 RECREATE=
 SHELL=/usr/bin/env bash
+TOX=tox $(TOX_OPTS)
+TOX_OPTS?=-v
 VENV_TOX_LOG_LOCK=.venv/log/.lock
 
 .PHONY: help
@@ -57,40 +60,40 @@ install-cdk: tox install-node
 
 ## unit-tests: Run unit tests
 unit-tests: venv
-	tox -v $(RECREATE)
+	$(TOX) $(RECREATE)
 
 ## integration-tests: Run integration tests (requires ci-deploy)
 integration-tests: venv
-	tox -v $(RECREATE) -e integration $(RECREATE)
+	$(TOX) $(RECREATE) -e integration $(RECREATE)
 
 ## synth: Run CDK synth
 synth: venv
-	tox -v $(RECREATE) -e dev -- synth '*' --app cdk/app.py
+	$(TOX) $(RECREATE) -e dev -- synth '*' --app cdk/app.py
 
 ## deploy: Run CDK deploy
 deploy: venv
-	tox -v $(RECREATE) -e dev -- deploy '*' --app cdk/app.py --progress events --require-approval never
+	$(TOX) $(RECREATE) -e dev -- deploy '*' --app cdk/app.py --progress events --require-approval never
 
 ## diff: Run CDK diff
 diff: venv
-	tox -v $(RECREATE) -e dev -- diff '*' --app cdk/app.py
+	$(TOX) $(RECREATE) -e dev -- diff '*' --app cdk/app.py
 
 ## destroy: Run CDK destroy
 destroy: venv
-	tox -v $(RECREATE) -e dev -- destroy --force '*' --app cdk/app.py --progress events
+	$(TOX) $(RECREATE) -e dev -- destroy --force '*' --app cdk/app.py --progress events
 
 ## ci-synth: Run CDK synth for integration stack
 ci-synth: venv
-	tox -v $(RECREATE) -e dev -- deploy '*' --app cdk/app_ci.py
+	$(TOX) $(RECREATE) -e dev -- deploy '*' --app cdk/app_ci.py
 
 ## ci-deploy: Run CDK deploy for integration stack
 ci-deploy: venv
-	tox -v $(RECREATE) -e dev -- deploy '*' --app cdk/app_ci.py --progress events --require-approval never
+	$(TOX) $(RECREATE) -e dev -- deploy '*' --app cdk/app_ci.py --progress events --require-approval never
 
 ## ci-diff: Run CDK diff for integration stack
 ci-diff: venv
-	tox -v $(RECREATE) -e dev -- diff '*' --app cdk/app_ci.py
+	$(TOX) $(RECREATE) -e dev -- diff '*' --app cdk/app_ci.py
 
 ## ci-destroy: Run CDK destroy for integration stack
 ci-destroy: venv
-	tox -v $(RECREATE) -e dev -- destroy --force '*' --app cdk/app_ci.py --progress events
+	$(TOX) $(RECREATE) -e dev -- destroy --force '*' --app cdk/app_ci.py --progress events
