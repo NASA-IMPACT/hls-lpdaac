@@ -84,7 +84,7 @@ destroy: venv
 
 ## ci-synth: Run CDK synth for integration stack
 ci-synth: venv
-	$(TOX) $(RECREATE) -e dev -- deploy '*' --app cdk/app_ci.py
+	$(TOX) $(RECREATE) -e dev -- synth '*' --app cdk/app_ci.py
 
 ## ci-deploy: Run CDK deploy for integration stack
 ci-deploy: venv
