@@ -121,7 +121,10 @@ the following commands to install the required packages:
 
 ```plain
 sudo apt update
-sudo apt install -y --no-install-recommends make python3.9-dev tox
+sudo apt install -y --no-install-recommends make python3.9-dev
+python -m pip install "tox>=3.18,<4"
+# See https://github.com/pypa/virtualenv/issues/1873#issuecomment-648956938
+python -m pip install --force-reinstall "virtualenv==20.0.23"
 ```
 
 Next, you must clone this repository, but to do so, you need to create a GitHub personal
