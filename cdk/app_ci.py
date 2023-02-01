@@ -9,7 +9,11 @@ from stacks import HlsLpdaacIntegrationStack, HlsLpdaacStack
 ci_app = cdk.App()
 account_id = iam.AccountRootPrincipal().account_id
 
-int_stack = HlsLpdaacIntegrationStack(ci_app, "integration-test-resources")
+int_stack = HlsLpdaacIntegrationStack(
+    ci_app,
+    "integration-test-resources",
+    managed_policy_name="mcp-tenantOperator",
+)
 stack_under_test = HlsLpdaacStack(
     ci_app,
     "hls-lpdaac-under-test",

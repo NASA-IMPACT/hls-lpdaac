@@ -1,3 +1,6 @@
+from typing import Optional
+
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_ssm as ssm
@@ -5,11 +8,37 @@ from aws_cdk import core as cdk
 
 
 class HlsLpdaacIntegrationStack(cdk.Stack):
-    def __init__(self, scope: cdk.Construct, id: str) -> None:
+    def __init__(
+        self,
+        scope: cdk.Construct,
+        id: str,
+        *,
+        managed_policy_name: Optional[str] = None,
+    ) -> None:
         super().__init__(scope, id)
 
-        self.bucket = s3.Bucket(self, "test-bucket")
-        self.queue = sqs.Queue(self, "test-queue")
+        if managed_policy_name:
+            account_id = iam.AccountRootPrincipal().account_id
+
+            iam.PermissionsBoundary.of(self).apply(
+                iam.ManagedPolicy.from_managed_policy_arn(
+                    self,
+                    "PermissionsBoundary",
+                    f"arn:aws:iam::{account_id}:policy/{managed_policy_name}",
+                )
+            )
+
+        self.bucket = s3.Bucket(
+            self,
+            "test-bucket",
+            removal_policy=cdk.RemovalPolicy.DESTROY,
+            # auto_delete_objects=True,
+        )
+        self.queue = sqs.Queue(
+            self,
+            "test-queue",
+            removal_policy=cdk.RemovalPolicy.DESTROY,
+        )
 
         # Set SSM Parameters for use within integration tests
 
