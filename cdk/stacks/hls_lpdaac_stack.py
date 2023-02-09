@@ -20,14 +20,14 @@ class HlsLpdaacStack(cdk.Stack):
     ) -> None:
         super().__init__(scope, stack_name)
 
-        if managed_policy_name:
-            account_id = iam.AccountRootPrincipal().account_id
+        print(f"MANAGED POLICY NAME: {managed_policy_name}")
 
+        if managed_policy_name:
             iam.PermissionsBoundary.of(self).apply(
-                iam.ManagedPolicy.from_managed_policy_arn(
+                iam.ManagedPolicy.from_managed_policy_name(
                     self,
                     "PermissionsBoundary",
-                    f"arn:aws:iam::{account_id}:policy/{managed_policy_name}",
+                    managed_policy_name,
                 )
             )
 
