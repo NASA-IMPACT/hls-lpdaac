@@ -17,8 +17,6 @@ class HlsLpdaacIntegrationStack(cdk.Stack):
     ) -> None:
         super().__init__(scope, id)
 
-        print(f"MANAGED POLICY NAME: {managed_policy_name}")
-
         if managed_policy_name:
             iam.PermissionsBoundary.of(self).apply(
                 iam.ManagedPolicy.from_managed_policy_name(
