@@ -104,6 +104,15 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Export secrets as environment variables
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        run: |
+          while read -rd $'' line
+          do
+            echo "$line" >> $GITHUB_ENV
+          done < <(jq -r <<<"$SECRETS_CONTEXT" \
+            'to_entries|map("\(.key)=\(.value)\u0000")[]')
       - name: Run integration tests
         run: |
           # Ensure stack is destroyed at exit, even if tests fail
