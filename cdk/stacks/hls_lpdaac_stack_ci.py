@@ -32,11 +32,7 @@ class HlsLpdaacIntegrationStack(cdk.Stack):
             removal_policy=cdk.RemovalPolicy.DESTROY,
             # auto_delete_objects=True,
         )
-        self.queue = sqs.Queue(
-            self,
-            "test-queue",
-            removal_policy=cdk.RemovalPolicy.DESTROY,
-        )
+        self.queue = sqs.Queue(self, "test-queue")
 
         # Set SSM Parameters for use within integration tests
 
