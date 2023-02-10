@@ -115,7 +115,6 @@ jobs:
             'to_entries|map("\(.key)=\(.value)\u0000")[]')
       - name: Run integration tests
         run: |
-          env
           # Ensure stack is destroyed at exit, even if tests fail
           trap "make ci-destroy" EXIT
           make ci-deploy
