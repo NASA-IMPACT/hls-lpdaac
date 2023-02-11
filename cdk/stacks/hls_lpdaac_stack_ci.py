@@ -18,13 +18,11 @@ class HlsLpdaacIntegrationStack(cdk.Stack):
         super().__init__(scope, id)
 
         if managed_policy_name:
-            account_id = iam.AccountRootPrincipal().account_id
-
             iam.PermissionsBoundary.of(self).apply(
-                iam.ManagedPolicy.from_managed_policy_arn(
+                iam.ManagedPolicy.from_managed_policy_name(
                     self,
                     "PermissionsBoundary",
-                    f"arn:aws:iam::{account_id}:policy/{managed_policy_name}",
+                    managed_policy_name,
                 )
             )
 
@@ -34,11 +32,7 @@ class HlsLpdaacIntegrationStack(cdk.Stack):
             removal_policy=cdk.RemovalPolicy.DESTROY,
             # auto_delete_objects=True,
         )
-        self.queue = sqs.Queue(
-            self,
-            "test-queue",
-            removal_policy=cdk.RemovalPolicy.DESTROY,
-        )
+        self.queue = sqs.Queue(self, "test-queue")
 
         # Set SSM Parameters for use within integration tests
 

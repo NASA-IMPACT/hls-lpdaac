@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 
-from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import core as cdk
 
@@ -10,7 +9,6 @@ from stacks import HlsLpdaacIntegrationStack, HlsLpdaacStack
 managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
 
 ci_app = cdk.App()
-account_id = iam.AccountRootPrincipal().account_id
 
 int_stack = HlsLpdaacIntegrationStack(
     ci_app,

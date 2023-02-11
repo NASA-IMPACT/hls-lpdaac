@@ -29,9 +29,9 @@ def test_notification(
 
     # Write S3 Object with .v2.0.json suffix to source bucket to trigger notification.
     body = '{ "greeting": "hello world!" }'
-    object = bucket.Object("greeting.v2.0.json")
-    object.put(Body=body)
-    object.wait_until_exists()
+    obj = bucket.Object("greeting.v2.0.json")
+    obj.put(Body=body)
+    obj.wait_until_exists()
 
     try:
         # Wait for lambda function to succeed, which should be triggered by S3
@@ -46,8 +46,8 @@ def test_notification(
         messages = queue.receive_messages(WaitTimeSeconds=20)
     finally:
         # Cleanup S3 Object with .v2.0.json suffix from source bucket.
-        object.delete()
-        object.wait_until_not_exists()
+        obj.delete()
+        obj.wait_until_not_exists()
 
     # Assert message contents == S3 Object contents (written above)
     assert len(messages) == 1

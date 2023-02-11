@@ -15,6 +15,7 @@ on:
     tags-ignore:
       - '*'
     paths:
+      - '.github/workflows/*'
       - 'cdk/**'
       - 'src/**'
       - 'cdk.json'
@@ -31,6 +32,7 @@ on:
       - main
       - develop
     paths:
+      - '.github/workflows/*'
       - 'cdk/**'
       - 'src/**'
       - 'cdk.json'
@@ -84,10 +86,6 @@ jobs:
           make unit-tests
 
   integration-tests:
-    # Run integration tests only on "push" or "release", which means only on
-    # `develop` or `main` branches, because the OIDC role in MCP trusts only
-    # those 2 branches.
-    if: github.event_name == 'push' || github.event_name == 'release'
     runs-on: ubuntu-22.04
     environment: dev
     needs: config
@@ -106,11 +104,20 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Export secrets as environment variables
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        run: |
+          while read -rd $'' line
+          do
+            echo "$line" >> $GITHUB_ENV
+          done < <(jq -r <<<"$SECRETS_CONTEXT" \
+            'to_entries|map("\(.key)=\(.value)\u0000")[]')
       - name: Run integration tests
         run: |
-          make ci-deploy
           # Ensure stack is destroyed at exit, even if tests fail
           trap "make ci-destroy" EXIT
+          make ci-deploy
           make integration-tests
 
   deploy-dev:
