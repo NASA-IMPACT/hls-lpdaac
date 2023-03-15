@@ -5,7 +5,7 @@ RECREATE=
 SHELL=/usr/bin/env bash
 TOX=tox $(TOX_OPTS)
 TOX_OPTS?=-v
-VENV_TOX_LOG_LOCK=.venv/log/.lock
+VENV_TOX_LOG_LOCK=.venv/.tox-info.json
 
 .PHONY: help
 .DEFAULT_GOAL := help
