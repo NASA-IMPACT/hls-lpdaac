@@ -1,7 +1,7 @@
 # Install Python dependencies, run tests, and lint with a single version of Python.
 # See https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: HLS LPDAAC Historical
+name: HLS LPDAAC Notifications
 
 on:
   workflow_dispatch:
@@ -73,11 +73,13 @@ jobs:
     needs: config
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
+          cache: 'pip'
+          cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
           pip install "tox>=${{ needs.config.outputs.TOX_MIN_VERSION }}"
@@ -91,16 +93,18 @@ jobs:
     needs: config
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
+          cache: 'pip'
+          cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
           pip install "tox>=${{ needs.config.outputs.TOX_MIN_VERSION }}"
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
