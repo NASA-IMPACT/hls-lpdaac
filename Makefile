@@ -1,6 +1,6 @@
 # CDK version must match the version specified in setup.py
-CDK_VERSION=1.176.0
-NODE_VERSION=16.17.1
+CDK_VERSION=1.204.0
+NODE_VERSION=18.18.2
 RECREATE=
 SHELL=/usr/bin/env bash
 TOX=tox $(TOX_OPTS)

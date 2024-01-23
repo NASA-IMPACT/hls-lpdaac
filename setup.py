@@ -4,7 +4,7 @@ from setuptools import find_packages, setup  # type: ignore
 
 aws_cdk_extras = [
     # CDK version number must match CDK_VERSION at top of Makefile
-    f"aws_cdk.{aws_cdk_package}==1.176.0"
+    f"aws_cdk.{aws_cdk_package}==1.204.0"
     for aws_cdk_package in [
         "core",
         "assertions",
