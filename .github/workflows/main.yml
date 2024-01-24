@@ -117,12 +117,16 @@ jobs:
             echo "$line" >> $GITHUB_ENV
           done < <(jq -r <<<"$SECRETS_CONTEXT" \
             'to_entries|map("\(.key)=\(.value)\u0000")[]')
+      - name: Deploy integration test stack
+        run: |
+          make deploy-historical-it
       - name: Run integration tests
         run: |
-          # Ensure stack is destroyed at exit, even if tests fail
-          trap "make ci-destroy" EXIT
-          make ci-deploy
-          make integration-tests
+          make historical-integration-tests
+      - name: Destroy integration test stack
+        if: '!cancelled()'
+        run: |
+          make destroy-historical-it
 
   deploy-dev:
     # Deploy to Dev only on push (including merged PR) to `develop` branch

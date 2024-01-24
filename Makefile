@@ -1,10 +1,12 @@
+APPS=$(subst _,-,$(patsubst cdk/app_%.py,%,$(wildcard cdk/app_*.py)))
+IT_APPS=$(subst _,-,$(patsubst cdk/app_%.py,%,$(wildcard cdk/app_*_it.py)))
 # CDK version must match the version specified in setup.py
 CDK_VERSION=1.204.0
 NODE_VERSION=18.18.2
 RECREATE=
 SHELL=/usr/bin/env bash
 TOX=tox $(TOX_OPTS)
-TOX_OPTS?=-v
+TOX_OPTS?=
 VENV_TOX_LOG_LOCK=.venv/.tox-info.json
 
 .PHONY: help
@@ -19,6 +21,8 @@ help: Makefile
 	@echo
 	@echo "Targets:"
 	@sed -n 's/^##//p' $< | column -t -s ':' | sed -e 's/^/ /'
+	@echo
+	@printf "  where APP is one of the following:\n$(patsubst %,\n  - %,$(APPS))\n"
 	@echo
 
 # Set the tox --recreate option when setup.py is newer than the tox log lock
@@ -62,38 +66,22 @@ install-cdk: tox install-node
 unit-tests: venv
 	$(TOX) $(RECREATE)
 
-## integration-tests: Run integration tests (requires ci-deploy)
-integration-tests: venv
-	$(TOX) $(RECREATE) -e integration $(RECREATE)
+## APP-integration-tests: Run integration tests for a CDK app (depends on deploy-APP-it)
+$(patsubst %-it,%-integration-tests,$(IT_APPS)): venv
+	$(TOX) $(RECREATE) -e integration -- $(wildcard tests/integration/test_$(subst -integration-tests,,$@)*.py)
 
-## synth: Run CDK synth
-synth: venv
-	$(TOX) $(RECREATE) -e dev -- synth '*' --app cdk/app.py
+## synth-APP: Synthesize a CDK app
+$(patsubst %,synth-%,$(APPS)): venv
+	$(TOX) $(RECREATE) -e dev -- synth --all --app $(subst -,_,$(patsubst synth-%,cdk/app_%.py,$@))
 
-## deploy: Run CDK deploy
-deploy: venv
-	$(TOX) $(RECREATE) -e dev -- deploy '*' --app cdk/app.py --progress events --require-approval never
+## diff-APP: Diff a CDK app
+$(patsubst %,diff-%,$(APPS)): venv
+	$(TOX) $(RECREATE) -e dev -- diff --all --app $(subst -,_,$(patsubst diff-%,cdk/app_%.py,$@))
 
-## diff: Run CDK diff
-diff: venv
-	$(TOX) $(RECREATE) -e dev -- diff '*' --app cdk/app.py
+## deploy-APP: Deploy a CDK app
+$(patsubst %,deploy-%,$(APPS)): venv
+	$(TOX) $(RECREATE) -e dev -- deploy --all --app $(subst -,_,$(patsubst deploy-%,cdk/app_%.py,$@)) --progress events --require-approval never
 
-## destroy: Run CDK destroy
-destroy: venv
-	$(TOX) $(RECREATE) -e dev -- destroy --force '*' --app cdk/app.py --progress events
-
-## ci-synth: Run CDK synth for integration stack
-ci-synth: venv
-	$(TOX) $(RECREATE) -e dev -- synth '*' --app cdk/app_ci.py
-
-## ci-deploy: Run CDK deploy for integration stack
-ci-deploy: venv
-	$(TOX) $(RECREATE) -e dev -- deploy '*' --app cdk/app_ci.py --progress events --require-approval never
-
-## ci-diff: Run CDK diff for integration stack
-ci-diff: venv
-	$(TOX) $(RECREATE) -e dev -- diff '*' --app cdk/app_ci.py
-
-## ci-destroy: Run CDK destroy for integration stack
-ci-destroy: venv
-	$(TOX) $(RECREATE) -e dev -- destroy --force '*' --app cdk/app_ci.py --progress events
+## destroy-APP: Destroy a CDK app
+$(patsubst %,destroy-%,$(APPS)): venv
+	$(TOX) $(RECREATE) -e dev -- destroy --all --app $(subst -,_,$(patsubst destroy-%,cdk/app_%.py,$@)) --progress events --force

@@ -3,7 +3,7 @@ import os
 
 from aws_cdk import core as cdk
 
-from stacks import HlsLpdaacStack
+from stacks import HistoricalNotificationStack
 
 # Required environment variables
 stack_name = os.environ["HLS_LPDAAC_STACK"]
@@ -15,8 +15,7 @@ managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
 
 app = cdk.App()
 
-# For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-HlsLpdaacStack(
+HistoricalNotificationStack(
     app,
     stack_name,
     bucket_name=bucket_name,

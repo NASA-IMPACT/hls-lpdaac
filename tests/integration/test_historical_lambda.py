@@ -18,12 +18,16 @@ def test_notification(
     ssm: SSMClient,
 ) -> None:
     # Get source bucket
-    bucket_name = ssm.get_parameter(Name="/tests/bucket_name")["Parameter"].get("Value")
+    bucket_name = ssm.get_parameter(Name="/hls/tests/historical-bucket-name")[
+        "Parameter"
+    ].get("Value")
     assert bucket_name is not None
     bucket: "Bucket" = s3.Bucket(bucket_name)
 
     # Get destination queue
-    queue_name = ssm.get_parameter(Name="/tests/queue_name")["Parameter"].get("Value")
+    queue_name = ssm.get_parameter(Name="/hls/tests/historical-queue-name")[
+        "Parameter"
+    ].get("Value")
     assert queue_name is not None
     queue: "Queue" = sqs.get_queue_by_name(QueueName=queue_name)
 
@@ -36,7 +40,9 @@ def test_notification(
     try:
         # Wait for lambda function to succeed, which should be triggered by S3
         # notification of object created in bucket above.
-        name = ssm.get_parameter(Name="/tests/function_name")["Parameter"].get("Value")
+        name = ssm.get_parameter(Name="/hls/tests/historical-function-name")[
+            "Parameter"
+        ].get("Value")
         assert name is not None
         waiter = lambda_.get_waiter("function_active_v2")
         waiter.wait(FunctionName=name, WaiterConfig={"Delay": 5, "MaxAttempts": 20})
