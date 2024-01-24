@@ -25,11 +25,7 @@ def _handler(event: "S3Event", queue_url: str) -> None:
 
     message = s3.Object(bucket, key).get()["Body"].read().decode("utf-8")
 
-    # To support testing, because mocked queue URLs do NOT contain a region (e.g.,
-    # https://queue.amazonaws.com/<account ID>/<queue_name>). Setting region_name to
-    # None just forces use of default region for mock queue URLs.
-    region_name = None if (name := queue_url.split(".")[1]) == "amazonaws" else name
-
+    region_name = queue_url.split(".")[1]
     sqs = boto3.client("sqs", region_name=region_name)
     response = sqs.send_message(QueueUrl=queue_url, MessageBody=message)
     status_code = response["ResponseMetadata"]["HTTPStatusCode"]
