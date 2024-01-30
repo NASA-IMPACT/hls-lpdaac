@@ -1,5 +1,3 @@
-from typing import List
-
 from setuptools import find_packages, setup  # type: ignore
 
 aws_cdk_extras = [
@@ -19,29 +17,29 @@ aws_cdk_extras = [
     ]
 ]
 
-install_requires: List[str] = []
+install_requires: list[str] = []
 
 extras_require_test = [
     *aws_cdk_extras,
-    "flake8",
-    "black",
-    "boto3",
-    "moto[s3,sqs]",
-    "pytest-cov",
-    "pytest",
+    "flake8~=7.0",
+    "black~=24.1",
+    "boto3~=1.34",
+    "moto[s3,sqs]~=4.0",
+    "pytest-cov~=4.1",
+    "pytest~=8.0",
 ]
 
 extras_require_dev = [
     *extras_require_test,
-    "aws_lambda_typing",
-    "boto3-stubs[iam,lambda,s3,sqs,ssm]",
-    "botocore-stubs",
-    "isort",
-    "mypy",
-    "nodeenv",
-    "pre-commit",
-    "pre-commit-hooks",
-    "pyright",
+    "aws_lambda_typing~=2.18",
+    "boto3-stubs[iam,lambda,s3,sqs,ssm]~=1.34",
+    "botocore-stubs~=1.34",
+    "isort~=5.13",
+    "mypy~=1.8",
+    "nodeenv~=1.8",
+    "pre-commit~=3.6",
+    "pre-commit-hooks~=4.5",
+    "pyright~=1.1",
 ]
 
 extras_require = {
