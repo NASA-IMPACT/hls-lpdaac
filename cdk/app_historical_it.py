@@ -27,7 +27,7 @@ stack_under_test = HistoricalNotificationStack(
 
 ssm.StringParameter(
     stack_under_test,
-    "function-name",
+    "historical-function-name",
     string_value=stack_under_test.lpdaac_historical_lambda.function_name,
     parameter_name=("/hls/tests/historical-function-name"),
 )
