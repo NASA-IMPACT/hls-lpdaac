@@ -8,14 +8,15 @@ from aws_cdk import aws_sqs as sqs
 from aws_cdk import core as cdk
 
 
-class HlsLpdaacStack(cdk.Stack):
+class NotificationStack(cdk.Stack):
     def __init__(
         self,
         scope: cdk.Construct,
         stack_name: str,
         *,
         bucket_name: str,
-        queue_arn: str,
+        lpdaac_queue_arn: str,
+        tiler_queue_arn: str,
         managed_policy_name: Optional[str] = None,
     ) -> None:
         super().__init__(scope, stack_name)
@@ -29,34 +30,35 @@ class HlsLpdaacStack(cdk.Stack):
                 )
             )
 
-        self.lpdaac_historical_bucket = s3.Bucket.from_bucket_name(
-            self,
-            "LpdaacHistoricalBucket",
-            bucket_name,
-        )
+        # Define resources
 
-        self.lpdaac_historical_queue = sqs.Queue.from_queue_arn(
-            self,
-            "LpdaacHistoricalQueue",
-            queue_arn=queue_arn,
+        self.bucket = s3.Bucket.from_bucket_name(self, "hls-output", bucket_name)
+        self.lpdaac_queue = sqs.Queue.from_queue_arn(
+            self, "lpdaac", queue_arn=lpdaac_queue_arn
         )
-
-        self.lpdaac_historical_lambda = lambda_.Function(
+        self.tiler_queue = sqs.Queue.from_queue_arn(
+            self, "tiler", queue_arn=tiler_queue_arn
+        )
+        self.notification_function = lambda_.Function(
             self,
-            "LpdaacHistoricalLambda",
-            code=lambda_.Code.from_asset("src/hls_lpdaac/historical"),
+            "ForwardNotifier",
+            code=lambda_.Code.from_asset("src/hls_lpdaac/forward"),
             handler="index.handler",
             runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
             memory_size=128,
             timeout=cdk.Duration.seconds(30),
-            environment=dict(QUEUE_URL=self.lpdaac_historical_queue.queue_url),
+            environment=dict(
+                LPDAAC_QUEUE_URL=self.lpdaac_queue.queue_url,
+                TILER_QUEUE_URL=self.tiler_queue.queue_url,
+            ),
         )
 
         # Wire everything up
 
-        self.lpdaac_historical_queue.grant_send_messages(self.lpdaac_historical_lambda)
-        self.lpdaac_historical_bucket.grant_read(self.lpdaac_historical_lambda)
-        self.lpdaac_historical_bucket.add_object_created_notification(
-            s3n.LambdaDestination(self.lpdaac_historical_lambda),  # type: ignore
+        self.lpdaac_queue.grant_send_messages(self.notification_function)
+        self.tiler_queue.grant_send_messages(self.notification_function)
+        self.bucket.grant_read(self.notification_function)
+        self.bucket.add_object_created_notification(
+            s3n.LambdaDestination(self.notification_function),  # type: ignore
             s3.NotificationKeyFilter(suffix=".v2.0.json"),
         )

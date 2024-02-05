@@ -101,9 +101,9 @@ make unit-tests
 To run integration tests:
 
 ```plain
-make ci-deploy
+make deploy-historical-it
 make integration-tests
-make ci-destroy
+make destroy-historical-it
 ```
 
 ## Deployment Using an EC2 Instance

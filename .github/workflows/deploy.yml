@@ -29,27 +29,40 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "${{ inputs.PYTHON_VERSION }}"
+          cache: 'pip'
+          cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
           pip install "tox>=${{ inputs.TOX_MIN_VERSION }}"
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      - name: Export secrets as environment variables
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_ARN }}
+          role-session-name: ${{ github.actor }}
+      - name: Convert secrets to environment variables
         env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          SECRETS_JSON: ${{ toJson(secrets) }}
         run: |
-          while read -rd $'' line
-          do
+          while read -rd $'' line; do
             echo "$line" >> $GITHUB_ENV
-          done < <(jq -r <<<"$SECRETS_CONTEXT" \
-            'to_entries|map("\(.key)=\(.value)\u0000")[]')
-      - name: Deploy to ${{ inputs.environment }}
-        run: make deploy
+          done < <(
+            jq -r <<<"$SECRETS_JSON" 'to_entries|map("\(.key)=\(.value)\u0000")[]'
+          )
+      - name: Convert vars to environment variables
+        env:
+          VARS_JSON: ${{ toJson(vars) }}
+        run: |
+          while read -rd $'' line; do
+            echo "$line" >> $GITHUB_ENV
+          done < <(
+            jq -r <<<"$VARS_JSON" 'to_entries|map("\(.key)=\(.value)\u0000")[]'
+          )
+      - name: Deploy forward notification to ${{ inputs.environment }}
+        run: |
+          make deploy-forward

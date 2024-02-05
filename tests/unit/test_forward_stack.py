@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from aws_cdk import core as cdk
 from aws_cdk.assertions import Match, Template
 
-from cdk.stacks import HlsLpdaacStack
+from cdk.stacks import ForwardNotificationStack
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket
@@ -13,11 +13,12 @@ if TYPE_CHECKING:
 
 def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
     app = cdk.App()
-    stack = HlsLpdaacStack(
+    stack = ForwardNotificationStack(
         app,
-        "hls-lpdaac",
+        "forward-notification",
         bucket_name=s3_bucket.name,
-        queue_arn=sqs_queue.attributes["QueueArn"],
+        lpdaac_queue_arn=sqs_queue.attributes["QueueArn"],
+        tiler_queue_arn=sqs_queue.attributes["QueueArn"],
     )
 
     template = Template.from_stack(stack)
@@ -38,7 +39,10 @@ def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
         "AWS::Lambda::Function",
         {
             "Environment": {
-                "Variables": {"QUEUE_URL": Match.object_like({"Fn::Join": args})}
+                "Variables": {
+                    "LPDAAC_QUEUE_URL": Match.object_like({"Fn::Join": args}),
+                    "TILER_QUEUE_URL": Match.object_like({"Fn::Join": args}),
+                }
             }
         },
     )

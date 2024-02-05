@@ -7,7 +7,7 @@ from aws_cdk import aws_ssm as ssm
 from aws_cdk import core as cdk
 
 
-class HlsLpdaacIntegrationStack(cdk.Stack):
+class NotificationITStack(cdk.Stack):
     def __init__(
         self,
         scope: cdk.Construct,
@@ -30,7 +30,7 @@ class HlsLpdaacIntegrationStack(cdk.Stack):
             self,
             "test-bucket",
             removal_policy=cdk.RemovalPolicy.DESTROY,
-            # auto_delete_objects=True,
+            auto_delete_objects=True,
         )
         self.queue = sqs.Queue(self, "test-queue")
 
@@ -38,14 +38,14 @@ class HlsLpdaacIntegrationStack(cdk.Stack):
 
         ssm.StringParameter(
             self,
-            "bucket_name",
+            "bucket-name",
             string_value=self.bucket.bucket_name,
-            parameter_name=("/tests/bucket_name"),
+            parameter_name="/hls/tests/historical-bucket-name",
         )
 
         ssm.StringParameter(
             self,
-            "queue_name",
+            "queue-name",
             string_value=self.queue.queue_name,
-            parameter_name=("/tests/queue_name"),
+            parameter_name="/hls/tests/historical-queue-name",
         )

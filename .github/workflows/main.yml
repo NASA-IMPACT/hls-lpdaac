@@ -1,7 +1,7 @@
 # Install Python dependencies, run tests, and lint with a single version of Python.
 # See https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: HLS LPDAAC Historical
+name: HLS LPDAAC Notifications
 
 on:
   workflow_dispatch:
@@ -73,11 +73,13 @@ jobs:
     needs: config
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
+          cache: 'pip'
+          cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
           pip install "tox>=${{ needs.config.outputs.TOX_MIN_VERSION }}"
@@ -87,38 +89,54 @@ jobs:
 
   integration-tests:
     runs-on: ubuntu-22.04
-    environment: dev
+    environment: dev-forward
     needs: config
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
+          cache: 'pip'
+          cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
           pip install "tox>=${{ needs.config.outputs.TOX_MIN_VERSION }}"
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      - name: Export secrets as environment variables
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_ARN }}
+          role-session-name: ${{ github.actor }}
+      - name: Convert secrets to environment variables
         env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          SECRETS_JSON: ${{ toJson(secrets) }}
         run: |
-          while read -rd $'' line
-          do
+          while read -rd $'' line; do
             echo "$line" >> $GITHUB_ENV
-          done < <(jq -r <<<"$SECRETS_CONTEXT" \
-            'to_entries|map("\(.key)=\(.value)\u0000")[]')
-      - name: Run integration tests
+          done < <(
+            jq -r <<<"$SECRETS_JSON" 'to_entries|map("\(.key)=\(.value)\u0000")[]'
+          )
+      - name: Convert vars to environment variables
+        env:
+          VARS_JSON: ${{ toJson(vars) }}
         run: |
-          # Ensure stack is destroyed at exit, even if tests fail
-          trap "make ci-destroy" EXIT
-          make ci-deploy
-          make integration-tests
+          while read -rd $'' line; do
+            echo "$line" >> $GITHUB_ENV
+          done < <(
+            jq -r <<<"$VARS_JSON" 'to_entries|map("\(.key)=\(.value)\u0000")[]'
+          )
+      - name: Deploy forward notification integration test stack
+        run: |
+          make deploy-forward-it
+      - name: Run forward notification integration tests
+        run: |
+          make forward-integration-tests
+      - name: Destroy forward notification integration test stack
+        if: '!cancelled()'
+        run: |
+          make destroy-forward-it
 
   deploy-dev:
     # Deploy to Dev only on push (including merged PR) to `develop` branch
@@ -129,7 +147,7 @@ jobs:
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
-      environment: dev
+      environment: dev-forward
       PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
       TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
@@ -143,7 +161,7 @@ jobs:
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
-      environment: prod
+      environment: prod-forward
       PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
       TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
