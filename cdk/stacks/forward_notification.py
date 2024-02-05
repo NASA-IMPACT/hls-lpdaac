@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
@@ -16,7 +16,7 @@ class NotificationStack(cdk.Stack):
         *,
         bucket_name: str,
         lpdaac_queue_arn: str,
-        tiler_queue_arn: str,
+        tiler_queue_arn: Optional[str] = None,
         managed_policy_name: Optional[str] = None,
     ) -> None:
         super().__init__(scope, stack_name)
@@ -36,8 +36,10 @@ class NotificationStack(cdk.Stack):
         self.lpdaac_queue = sqs.Queue.from_queue_arn(
             self, "lpdaac", queue_arn=lpdaac_queue_arn
         )
-        self.tiler_queue = sqs.Queue.from_queue_arn(
-            self, "tiler", queue_arn=tiler_queue_arn
+        self.tiler_queue: Union[sqs.Queue, sqs.IQueue] = (
+            sqs.Queue(self, "tiler", retention_period=cdk.Duration.minutes(5))
+            if tiler_queue_arn is None
+            else sqs.Queue.from_queue_arn(self, "tiler", queue_arn=tiler_queue_arn)
         )
         self.notification_function = lambda_.Function(
             self,

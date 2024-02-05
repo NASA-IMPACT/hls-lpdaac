@@ -9,10 +9,13 @@ from stacks import ForwardNotificationStack
 stack_name = os.environ["HLS_LPDAAC_STACK"]
 bucket_name = os.environ["HLS_LPDAAC_BUCKET_NAME"]
 queue_arn = os.environ["HLS_LPDAAC_QUEUE_ARN"]
-tiler_queue_arn = os.environ["HLS_LPDAAC_TILER_QUEUE_ARN"]
 
 # Optional environment variables
 managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
+# Optional, but if it is not provided, the tiler queue will be created, which
+# is what we want in all environments except production since there is only a
+# single tiler queue.
+tiler_queue_arn = os.getenv("HLS_LPDAAC_TILER_QUEUE_ARN")
 
 app = cdk.App()
 
