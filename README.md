@@ -12,28 +12,38 @@
 ## Environment Settings
 
 ```plain
-# AWS_PROFILE (if running locally) or key, id, and possibly token
-export AWS_PROFILE=<profile name>
-# -- OR ---
+# AWS Short-term Access Key
+
+export AWS_DEFAULT_REGION=us-west-2
 export AWS_ACCESS_KEY_ID=<id>
 export AWS_SECRET_ACCESS_KEY=<key>
 export AWS_SESSION_TOKEN=<token>
 
-export AWS_DEFAULT_REGION=us-west-2
-export HLS_LPDAAC_BUCKET_NAME=<source bucket name>
-export HLS_LPDAAC_MANAGED_POLICY_NAME=<(e.g., mcp-tenantOperator)>
-export HLS_LPDAAC_QUEUE_ARN=<destination queue ARN>
+# Stack variables
+
 export HLS_LPDAAC_STACK=<stack name>
+export HLS_LPDAAC_BUCKET_NAME=<source bucket name>
+export HLS_LPDAAC_QUEUE_ARN=<destination queue ARN>
+# Required ONLY in PROD for FORWARD processing (otherwise, a dummy queue is created)
+export HLS_LPDAAC_TILER_QUEUE_ARN=<tiler queue ARN>
+export HLS_LPDAAC_MANAGED_POLICY_NAME=mcp-tenantOperator
 ```
 
 ## CDK Commands
+
+In the `make` commands shown below, `<APP>` must be one of the following:
+
+- `forward`
+- `forward-it` (integration test stack)
+- `historical`
+- `historical-it` (integration test stack)
 
 ### Synth
 
 Display generated cloud formation template that will be used to deploy.
 
 ```plain
-make synth
+make synth-<APP>
 ```
 
 ### Diff
@@ -41,7 +51,7 @@ make synth
 Display a diff of the current deployment and any changes created.
 
 ```plain
-make diff
+make diff-<APP>
 ```
 
 ### Deploy
@@ -49,7 +59,7 @@ make diff
 Deploy current version of stack:
 
 ```plain
-make deploy
+make deploy-<APP>
 ```
 
 ### Destroy
@@ -57,7 +67,7 @@ make deploy
 Destroy current version of stack:
 
 ```plain
-make destroy
+make destroy-<APP>
 ```
 
 ### Development
@@ -98,46 +108,18 @@ To run unit tests:
 make unit-tests
 ```
 
-To run integration tests:
+To run integration tests for forward processing:
+
+```plain
+make deploy-forward-it
+make forward-integration-tests
+make destroy-forward-it
+```
+
+To run integration tests for historical processing:
 
 ```plain
 make deploy-historical-it
-make integration-tests
+make historical-integration-tests
 make destroy-historical-it
 ```
-
-## Deployment Using an EC2 Instance
-
-Create an EC2 instance:
-
-- **AMI:** `ami-07d249fe97e5e7a77` (MCP Ubuntu 20.04 20220801T230742), which can be
-  found under "My AMIs > Shared with me"
-- **Instance type:** `t3-small`
-- **Security group:** `launch-wizard-1` (`sg-0e915c4a88d790e96`), which allows SSH
-- **Advanced details > IAM instance profile:** `hls-stack-deploy`
-
-Once the instance is ready, connect to it via either Session Manager or SSH, and run
-the following commands to install the required packages:
-
-```plain
-sudo apt update
-sudo apt install -y --no-install-recommends make python3.9-dev
-python -m pip install "tox>=3.18,<4"
-# See https://github.com/pypa/virtualenv/issues/1873#issuecomment-648956938
-python -m pip install --force-reinstall "virtualenv==20.0.23"
-```
-
-Next, you must clone this repository, but to do so, you need to create a GitHub personal
-access token, which you then need to use as your password, when prompted for it during
-the clone operation.  Once you have a GitHub personal access token, continue with the
-following commands within your Session Manager or SSH session:
-
-```plain
-bash
-cd ~
-git clone https://github.com/NASA-IMPACT/hls-lpdaac.git
-cd hls-lpdaac
-```
-
-At this point, follow the instructions above for Environment Settings and you
-should then be able to run unit tests and integration tests as described above.
