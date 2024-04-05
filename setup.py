@@ -34,6 +34,7 @@ extras_require_dev = [
     "aws_lambda_typing~=2.18",
     "boto3-stubs[iam,lambda,s3,sqs,ssm]~=1.34",
     "botocore-stubs~=1.34",
+    "diagrams~=0.23",
     "isort~=5.13",
     "mypy~=1.8",
     "nodeenv~=1.8",
