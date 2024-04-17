@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 import os
 
+from aws_cdk import App, Tags
 from aws_cdk import aws_ssm as ssm
-from aws_cdk import core as cdk
 
 from stacks import ForwardNotificationITStack, ForwardNotificationStack
 
 managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
 
-app = cdk.App()
+app = App()
 
 it_stack = ForwardNotificationITStack(
     app,
@@ -39,6 +39,6 @@ for k, v in dict(
     Project="hls",
     App="forward-it",
 ).items():
-    cdk.Tags.of(app).add(k, v, apply_to_launched_instances=True)
+    Tags.of(app).add(k, v, apply_to_launched_instances=True)
 
 app.synth()

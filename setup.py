@@ -1,20 +1,8 @@
 from setuptools import find_packages, setup  # type: ignore
 
 aws_cdk_extras = [
-    # CDK version number must match CDK_VERSION at top of Makefile
-    f"aws_cdk.{aws_cdk_package}==1.204.0"
-    for aws_cdk_package in [
-        "core",
-        "assertions",
-        "aws-events",
-        "aws-events-targets",
-        "aws-iam",
-        "aws-lambda",
-        "aws-lambda-python",
-        "aws-s3",
-        "aws-s3-notifications",
-        "aws-sqs",
-    ]
+    "aws-cdk-lib>=2.0.0",
+    "constructs>=10.0.0",
 ]
 
 install_requires: list[str] = []

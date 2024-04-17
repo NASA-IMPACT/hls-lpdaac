@@ -1,17 +1,18 @@
 from typing import Optional, Union
 
+from aws_cdk import Duration, Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_notifications as s3n
 from aws_cdk import aws_sqs as sqs
-from aws_cdk import core as cdk
+from constructs import Construct
 
 
-class NotificationStack(cdk.Stack):
+class NotificationStack(Stack):
     def __init__(
         self,
-        scope: cdk.Construct,
+        scope: Construct,
         stack_name: str,
         *,
         bucket_name: str,
@@ -37,7 +38,7 @@ class NotificationStack(cdk.Stack):
             self, "lpdaac", queue_arn=lpdaac_queue_arn
         )
         self.tiler_queue: Union[sqs.Queue, sqs.IQueue] = (
-            sqs.Queue(self, "tiler", retention_period=cdk.Duration.minutes(5))
+            sqs.Queue(self, "tiler", retention_period=Duration.minutes(5))
             if tiler_queue_arn is None
             else sqs.Queue.from_queue_arn(self, "tiler", queue_arn=tiler_queue_arn)
         )
@@ -48,7 +49,7 @@ class NotificationStack(cdk.Stack):
             handler="index.handler",
             runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
             memory_size=128,
-            timeout=cdk.Duration.seconds(30),
+            timeout=Duration.seconds(30),
             environment=dict(
                 LPDAAC_QUEUE_URL=self.lpdaac_queue.queue_url,
                 TILER_QUEUE_URL=self.tiler_queue.queue_url,

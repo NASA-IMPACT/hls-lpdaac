@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 
-from aws_cdk import core as cdk
+from aws_cdk import App, Tags
 
 from stacks import ForwardNotificationStack
 
@@ -17,7 +17,7 @@ managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
 # single tiler queue.
 tiler_queue_arn = os.getenv("HLS_LPDAAC_TILER_QUEUE_ARN")
 
-app = cdk.App()
+app = App()
 
 ForwardNotificationStack(
     app,
@@ -32,6 +32,6 @@ for k, v in dict(
     Project="hls",
     Stack=stack_name,
 ).items():
-    cdk.Tags.of(app).add(k, v, apply_to_launched_instances=True)
+    Tags.of(app).add(k, v, apply_to_launched_instances=True)
 
 app.synth()
