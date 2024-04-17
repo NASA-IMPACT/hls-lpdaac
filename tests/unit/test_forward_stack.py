@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from aws_cdk import core as cdk
+from aws_cdk import App
 from aws_cdk.assertions import Match, Template
 
 from cdk.stacks import ForwardNotificationStack
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
-    app = cdk.App()
+    app = App()
     stack = ForwardNotificationStack(
         app,
         "forward-notification",

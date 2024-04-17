@@ -1,7 +1,6 @@
 APPS=$(subst _,-,$(patsubst cdk/app_%.py,%,$(wildcard cdk/app_*.py)))
 IT_APPS=$(subst _,-,$(patsubst cdk/app_%.py,%,$(wildcard cdk/app_*_it.py)))
-# CDK version must match the version specified in setup.py
-CDK_VERSION=1.204.0
+CDK_VERSION=2.137.0
 NODE_VERSION=18.18.2
 RECREATE=
 SHELL=/usr/bin/env bash
@@ -9,7 +8,7 @@ TOX=tox $(TOX_OPTS)
 TOX_OPTS?=
 VENV_TOX_LOG_LOCK=.venv/.tox-info.json
 
-.PHONY: help
+.PHONY: help bootstrap install-cdk install-node tox unit-tests venv
 .DEFAULT_GOAL := help
 
 help: Makefile
@@ -39,28 +38,31 @@ $(VENV_TOX_LOG_LOCK): setup.py
 venv: $(VENV_TOX_LOG_LOCK)
 
 tox:
-	if [[ -z $${TOX_ENV_DIR+x} ]]; then \
+	@if [[ -z $${TOX_ENV_DIR} ]]; then \
 	    echo "ERROR: For tox.ini use only" >&2; \
 	    exit 1; \
 	fi
 
 # NOTE: Intended only for use from tox.ini.
-# Install Node.js within the tox virtualenv.
+# Install Node.js within the tox virtualenv, if it's not installed or it's the wrong version.
 install-node: tox
-	# Install node in the virtualenv, if it's not installed or it's the wrong version.
-	if [[ ! $$(type node 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(node -v) =~ $(NODE_VERSION) ]]; then \
-	    nodeenv --node $(NODE_VERSION) --python-virtualenv; \
+	@if [[ ! $$(type node 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(node -v) =~ $(NODE_VERSION) ]]; then \
+	    set -x; nodeenv --node $(NODE_VERSION) --python-virtualenv; \
 	fi
 
 # NOTE: Intended only for use from tox.ini
-# Install the CDK CLI within the tox virtualenv.
-install-cdk: tox install-node
-	# Install cdk in the virtualenv, if it's not installed or it's the wrong version.
-	if [[ ! $$(type cdk 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(cdk --version) =~ $(CDK_VERSION) ]]; then \
-	    npm install --location global "aws-cdk@$(CDK_VERSION)"; \
+# Install the CDK CLI within the tox virtualenv, if it's not installed or it's the wrong version.
+install-cdk: install-node
+	@if [[ ! $$(type cdk 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(cdk --version) =~ $(CDK_VERSION) ]]; then \
+	    set -x; npm install --location global "aws-cdk@$(CDK_VERSION)"; \
 	fi
-  	# Acknowledge CDK notice regarding CDK v1 being in maintenance mode.
-	grep -q 19836 cdk.context.json 2>/dev/null || cdk acknowledge 19836
+
+## bootstrap: Bootstrap the CDK toolkit
+bootstrap:
+	$(TOX) $(RECREATE) -e dev -- bootstrap \
+	    --toolkit-stack-name CDKToolkitV2 \
+	    --custom-permissions-boundary mcp-tenantOperator \
+	    --template cdk/bootstrap-template.yaml
 
 ## unit-tests: Run unit tests
 unit-tests: venv

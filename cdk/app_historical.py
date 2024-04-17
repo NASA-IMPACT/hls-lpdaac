@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 
-from aws_cdk import core as cdk
+from aws_cdk import App, Tags
 
 from stacks import HistoricalNotificationStack
 
@@ -13,7 +13,7 @@ queue_arn = os.environ["HLS_LPDAAC_QUEUE_ARN"]
 # Optional environment variables
 managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
 
-app = cdk.App()
+app = App()
 
 HistoricalNotificationStack(
     app,
@@ -27,6 +27,6 @@ for k, v in dict(
     Project="hls",
     Stack=stack_name,
 ).items():
-    cdk.Tags.of(app).add(k, v, apply_to_launched_instances=True)
+    Tags.of(app).add(k, v, apply_to_launched_instances=True)
 
 app.synth()

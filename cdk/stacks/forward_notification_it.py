@@ -1,16 +1,17 @@
 from typing import Optional
 
+from aws_cdk import RemovalPolicy, Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_ssm as ssm
-from aws_cdk import core as cdk
+from constructs import Construct
 
 
-class NotificationITStack(cdk.Stack):
+class NotificationITStack(Stack):
     def __init__(
         self,
-        scope: cdk.Construct,
+        scope: Construct,
         id: str,
         *,
         managed_policy_name: Optional[str] = None,
@@ -29,7 +30,7 @@ class NotificationITStack(cdk.Stack):
         self.bucket = s3.Bucket(
             self,
             "test-bucket",
-            removal_policy=cdk.RemovalPolicy.DESTROY,
+            removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
         )
         self.forward_queue = sqs.Queue(self, "forward-queue")
