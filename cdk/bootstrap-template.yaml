@@ -188,14 +188,6 @@ Resources:
                       - UseAwsManagedKey
                       - Ref: AWS::NoValue
                       - Fn::Sub: ${FileAssetsBucketKmsKeyId}
-      PublicAccessBlockConfiguration:
-        Fn::If:
-          - UsePublicAccessBlockConfiguration
-          - BlockPublicAcls: true
-            BlockPublicPolicy: true
-            IgnorePublicAcls: true
-            RestrictPublicBuckets: true
-          - Ref: AWS::NoValue
       VersioningConfiguration:
         Status: Enabled
       LifecycleConfiguration:
@@ -285,6 +277,11 @@ Resources:
               - Ref: AWS::NoValue
       RoleName:
         Fn::Sub: cdk-${Qualifier}-file-publishing-role-${AWS::AccountId}-${AWS::Region}
+      PermissionsBoundary:
+        Fn::If:
+          - PermissionsBoundarySet
+          - Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${InputPermissionsBoundary}
+          - Ref: AWS::NoValue
       Tags:
         - Key: aws-cdk:bootstrap-role
           Value: file-publishing
@@ -308,6 +305,11 @@ Resources:
               - Ref: AWS::NoValue
       RoleName:
         Fn::Sub: cdk-${Qualifier}-image-publishing-role-${AWS::AccountId}-${AWS::Region}
+      PermissionsBoundary:
+        Fn::If:
+          - PermissionsBoundarySet
+          - Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${InputPermissionsBoundary}
+          - Ref: AWS::NoValue
       Tags:
         - Key: aws-cdk:bootstrap-role
           Value: image-publishing
@@ -339,6 +341,11 @@ Resources:
               - Ref: AWS::NoValue
       RoleName:
         Fn::Sub: cdk-${Qualifier}-lookup-role-${AWS::AccountId}-${AWS::Region}
+      PermissionsBoundary:
+        Fn::If:
+          - PermissionsBoundarySet
+          - Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${InputPermissionsBoundary}
+          - Ref: AWS::NoValue
       ManagedPolicyArns:
         - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/ReadOnlyAccess
       Policies:
@@ -508,6 +515,11 @@ Resources:
           PolicyName: default
       RoleName:
         Fn::Sub: cdk-${Qualifier}-deploy-role-${AWS::AccountId}-${AWS::Region}
+      PermissionsBoundary:
+        Fn::If:
+          - PermissionsBoundarySet
+          - Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${InputPermissionsBoundary}
+          - Ref: AWS::NoValue
       Tags:
         - Key: aws-cdk:bootstrap-role
           Value: deploy
