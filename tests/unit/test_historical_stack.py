@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from aws_cdk import core as cdk
+from aws_cdk import App
 from aws_cdk.assertions import Match, Template
 
-from cdk.stacks import HlsLpdaacStack
+from cdk.stacks import HistoricalNotificationStack
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import Bucket
@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
-    app = cdk.App()
-    stack = HlsLpdaacStack(
+    app = App()
+    stack = HistoricalNotificationStack(
         app,
         "hls-lpdaac",
         bucket_name=s3_bucket.name,

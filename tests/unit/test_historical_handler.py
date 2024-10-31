@@ -18,7 +18,9 @@ def test_lpdaac_historical_handler(
     from hls_lpdaac.historical.index import _handler
 
     _handler(s3_event, sqs_queue.url)
-    messages = sqs_queue.receive_messages()
+    # We expect only 1 message, but we set MaxNumberOfMessages > 1 to allow us
+    # to fail the test if there are multiple messages.
+    messages = sqs_queue.receive_messages(MaxNumberOfMessages=10)
     expected_message = s3_object.get()["Body"].read().decode("utf-8")
 
     assert len(messages) == 1

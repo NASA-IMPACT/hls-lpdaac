@@ -12,24 +12,38 @@
 ## Environment Settings
 
 ```plain
-export AWS_PROFILE=<profile name>
-export AWS_REGION=<region>
+# AWS Short-term Access Key
+
+export AWS_DEFAULT_REGION=us-west-2
+export AWS_ACCESS_KEY_ID=<id>
+export AWS_SECRET_ACCESS_KEY=<key>
+export AWS_SESSION_TOKEN=<token>
+
+# Stack variables
+
 export HLS_LPDAAC_STACK=<stack name>
 export HLS_LPDAAC_BUCKET_NAME=<source bucket name>
 export HLS_LPDAAC_QUEUE_ARN=<destination queue ARN>
-
-# Optional
-export HLS_LPDAAC_MANAGED_POLICY_NAME=<(e.g., mcp-tenantOperator)>
+# Required ONLY in PROD for FORWARD processing (otherwise, a dummy queue is created)
+export HLS_LPDAAC_TILER_QUEUE_ARN=<tiler queue ARN>
+export HLS_LPDAAC_MANAGED_POLICY_NAME=mcp-tenantOperator
 ```
 
 ## CDK Commands
+
+In the `make` commands shown below, `<APP>` must be one of the following:
+
+- `forward`
+- `forward-it` (integration test stack)
+- `historical`
+- `historical-it` (integration test stack)
 
 ### Synth
 
 Display generated cloud formation template that will be used to deploy.
 
 ```plain
-make synth
+make synth-<APP>
 ```
 
 ### Diff
@@ -37,7 +51,7 @@ make synth
 Display a diff of the current deployment and any changes created.
 
 ```plain
-make diff
+make diff-<APP>
 ```
 
 ### Deploy
@@ -45,7 +59,7 @@ make diff
 Deploy current version of stack:
 
 ```plain
-make deploy
+make deploy-<APP>
 ```
 
 ### Destroy
@@ -53,7 +67,7 @@ make deploy
 Destroy current version of stack:
 
 ```plain
-make destroy
+make destroy-<APP>
 ```
 
 ### Development
@@ -64,11 +78,11 @@ For active stack development run
 tox -e dev -r -- version
 ```
 
-This creates a local virtualenv in the directory `.venv-dev`.
+This creates a local virtualenv in the directory `.venv`.
 To use it for development:
 
 ```plain
-source .venv-dev/bin/activate
+source .venv/bin/activate
 ```
 
 Install pre-commit hooks:
@@ -94,10 +108,18 @@ To run unit tests:
 make unit-tests
 ```
 
-To run integration tests:
+To run integration tests for forward processing:
 
 ```plain
-make ci-deploy
-make integration-tests
-make ci-destroy
+make deploy-forward-it
+make forward-integration-tests
+make destroy-forward-it
+```
+
+To run integration tests for historical processing:
+
+```plain
+make deploy-historical-it
+make historical-integration-tests
+make destroy-historical-it
 ```

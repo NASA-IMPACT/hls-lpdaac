@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Iterator
 
 import boto3
 import pytest
-from moto import mock_s3, mock_sqs  # type: ignore
+from moto import mock_s3, mock_sqs
 
 if TYPE_CHECKING:
     from aws_lambda_typing.events import S3Event
@@ -39,7 +39,7 @@ def s3_bucket(s3: "S3ServiceResource") -> "Bucket":
 
 @pytest.fixture(scope="function")
 def s3_object(s3_bucket: "Bucket") -> "Object":
-    return s3_bucket.put_object(Key="myobject", Body=bytes("test", "utf-8"))
+    return s3_bucket.put_object(Key="myobject.v2.json", Body=bytes("test", "utf-8"))
 
 
 @pytest.fixture(scope="function")
