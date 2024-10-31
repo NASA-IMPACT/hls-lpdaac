@@ -1,7 +1,5 @@
 APPS=$(subst _,-,$(patsubst cdk/app_%.py,%,$(wildcard cdk/app_*.py)))
 IT_APPS=$(subst _,-,$(patsubst cdk/app_%.py,%,$(wildcard cdk/app_*_it.py)))
-CDK_VERSION=2.137.0
-NODE_VERSION=18.18.2
 RECREATE=
 SHELL=/usr/bin/env bash
 TOX=tox $(TOX_OPTS)
@@ -44,18 +42,14 @@ tox:
 	fi
 
 # NOTE: Intended only for use from tox.ini.
-# Install Node.js within the tox virtualenv, if it's not installed or it's the wrong version.
+# Install Node.js within the tox virtualenv.
 install-node: tox
-	@if [[ ! $$(type node 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(node -v) =~ $(NODE_VERSION) ]]; then \
-	    set -x; nodeenv --node $(NODE_VERSION) --python-virtualenv; \
-	fi
+	nodeenv --node lts --python-virtualenv
 
 # NOTE: Intended only for use from tox.ini
-# Install the CDK CLI within the tox virtualenv, if it's not installed or it's the wrong version.
+# Install the CDK CLI within the tox virtualenv.
 install-cdk: install-node
-	@if [[ ! $$(type cdk 2>/dev/null) =~ $${VIRTUAL_ENV} || ! $$(cdk --version) =~ $(CDK_VERSION) ]]; then \
-	    set -x; npm install --location global "aws-cdk@$(CDK_VERSION)"; \
-	fi
+	npm install --location global "aws-cdk@latest"
 
 ## bootstrap: Bootstrap the CDK toolkit
 bootstrap:
