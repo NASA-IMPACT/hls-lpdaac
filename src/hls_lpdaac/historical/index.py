@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import boto3
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from aws_lambda_typing.context import Context
     from aws_lambda_typing.events import S3Event
 
