@@ -12,7 +12,7 @@ extras_require_test = [
     "flake8~=7.0",
     "black~=24.1",
     "boto3~=1.34",
-    "moto[s3,sqs]~=4.0",
+    "moto[s3,sqs]~=5.0",
     "pytest-cov~=4.1",
     "pytest~=8.0",
 ]

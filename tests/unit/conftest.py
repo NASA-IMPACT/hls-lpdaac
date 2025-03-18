@@ -5,7 +5,7 @@ from typing import Callable, Iterator
 
 import boto3
 import pytest
-from moto import mock_s3, mock_sqs
+from moto import mock_aws
 from mypy_boto3_s3 import S3ServiceResource
 from mypy_boto3_s3.service_resource import Bucket, Object
 from mypy_boto3_sqs import SQSServiceResource
@@ -24,7 +24,7 @@ def aws_credentials():
 
 @pytest.fixture(scope="function")
 def s3(aws_credentials) -> Iterator[S3ServiceResource]:
-    with mock_s3():
+    with mock_aws():
         yield boto3.resource("s3")
 
 
@@ -49,7 +49,7 @@ def make_s3_object_with_prefix(s3_bucket: Bucket) -> Callable[[str], Object]:
 
 @pytest.fixture(scope="function")
 def sqs(aws_credentials) -> Iterator[SQSServiceResource]:
-    with mock_sqs():
+    with mock_aws():
         yield boto3.resource("sqs")
 
 
