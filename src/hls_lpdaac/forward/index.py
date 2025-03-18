@@ -13,7 +13,7 @@ s3 = boto3.resource("s3")
 
 
 def handler(event: "S3Event", _: "Context") -> None:
-    return _handler(
+    return _handler(  # pragma: no cover
         event,
         lpdaac_queue_url=os.environ["LPDAAC_QUEUE_URL"],
         tiler_queue_url=os.environ["TILER_QUEUE_URL"],
