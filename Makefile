@@ -44,7 +44,7 @@ tox:
 # NOTE: Intended only for use from tox.ini.
 # Install Node.js within the tox virtualenv.
 install-node: tox
-	type node || nodeenv --node lts --python-virtualenv
+	nodeenv --node lts --python-virtualenv
 
 # NOTE: Intended only for use from tox.ini
 # Install the CDK CLI within the tox virtualenv.
