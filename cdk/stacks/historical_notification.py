@@ -47,7 +47,7 @@ class NotificationStack(Stack):
             "HistoricalLambda",
             code=lambda_.Code.from_asset("src/hls_lpdaac/historical"),
             handler="index.handler",
-            runtime=lambda_.Runtime.PYTHON_3_9,  # type: ignore
+            runtime=lambda_.Runtime.PYTHON_3_12,
             memory_size=128,
             timeout=Duration.seconds(30),
             environment=dict(QUEUE_URL=self.lpdaac_historical_queue.queue_url),
