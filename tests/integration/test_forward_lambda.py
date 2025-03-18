@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Iterator, Sequence
 
-if TYPE_CHECKING:
-    from mypy_boto3_lambda import LambdaClient
-    from mypy_boto3_s3 import S3ServiceResource
-    from mypy_boto3_sqs import SQSServiceResource
-    from mypy_boto3_ssm import SSMClient
+from mypy_boto3_s3 import S3ServiceResource
+from mypy_boto3_s3.service_resource import Bucket, Object
+from mypy_boto3_sqs import SQSServiceResource
+from mypy_boto3_sqs.service_resource import Message, Queue
+from mypy_boto3_ssm import SSMClient
 
 
 def test_notification(
-    lambda_: LambdaClient,
     s3: S3ServiceResource,
     sqs: SQSServiceResource,
     ssm: SSMClient,
@@ -18,52 +17,35 @@ def test_notification(
     # Get source bucket
     bucket_name = ssm_param_value(ssm, "/hls/tests/forward-bucket-name")
     bucket = s3.Bucket(bucket_name)
-
-    # Get forward notification queue
     forward_queue_name = ssm_param_value(ssm, "/hls/tests/forward-queue-name")
     forward_queue = sqs.get_queue_by_name(QueueName=forward_queue_name)
-
-    # Get tiler queue
     tiler_queue_name = ssm_param_value(ssm, "/hls/tests/tiler-queue-name")
     tiler_queue = sqs.get_queue_by_name(QueueName=tiler_queue_name)
 
-    # Write S3 Object with .v2.0.json suffix to source bucket to trigger notification.
     body = '{ "greeting": "hello world!" }'
-    json_key = "greeting.v2.0.json"
-    obj = bucket.Object(json_key)
-    obj.put(Body=body)
-    obj.wait_until_exists()
+    objects = write_objects(bucket, body)
 
     try:
-        # Wait for lambda function to succeed, which should be triggered by S3
-        # notification of object created in bucket above.
-        name = ssm_param_value(ssm, "/hls/tests/forward-function-name")
-        waiter = lambda_.get_waiter("function_active_v2")
-        waiter.wait(FunctionName=name, WaiterConfig={"Delay": 5, "MaxAttempts": 20})
-
-        # Receive message from destination queue, which should be sent by Lambda
-        # function above.
-        forward_messages = forward_queue.receive_messages(
-            MaxNumberOfMessages=10, WaitTimeSeconds=20
-        )
-        tiler_messages = tiler_queue.receive_messages(
-            MaxNumberOfMessages=10, WaitTimeSeconds=20
-        )
+        forward_messages = list(fetch_messages(forward_queue))
+        tiler_messages = list(fetch_messages(tiler_queue))
     finally:
         # Cleanup S3 Object with .v2.0.json suffix from source bucket.
-        obj.delete()
-        obj.wait_until_not_exists()
+        for obj in objects:
+            obj.delete()
+            obj.wait_until_not_exists()
 
-    # Assert message contents == S3 Object contents (written above)
-    assert len(forward_messages) == 1
+    # We expect 4 messages, 2 for regular and 2 for VI
+    assert len(forward_messages) == 4
     assert forward_messages[0].body == body
 
-    # Assert message contents == S3 Object contents (written above)
-    assert len(tiler_messages) == 1
-    assert (
-        tiler_messages[0].body
-        == f"s3://{bucket_name}/{json_key.replace('.json', '_stac.json')}"
-    )
+    # We expect only 2 messages for the 2 non-VI objects written
+    assert len(tiler_messages) == 2
+    expected_bodies = [
+        f"s3://{bucket_name}/{obj.key.replace('.json', '_stac.json')}"
+        for obj in objects
+        if "_VI" in obj.key
+    ]
+    assert all(message.body in expected_bodies for message in tiler_messages)
 
 
 def ssm_param_value(ssm: SSMClient, name: str) -> str:
@@ -71,3 +53,34 @@ def ssm_param_value(ssm: SSMClient, name: str) -> str:
     assert value is not None  # make type checker happy
 
     return value
+
+
+def write_objects(bucket: Bucket, body: str) -> Sequence[Object]:
+    # Write S3 Objects with .v2.0.json suffix to source bucket to trigger notification.
+    # We expect 4 messages in the forward queue and 2 in the tiler queue because the
+    # tiler queue should not send messages for VI.
+
+    objects = [
+        bucket.Object(f"{prefix}/greeting.v2.0.json")
+        for prefix in ("L30", "S30", "L30_VI", "S30_VI")
+    ]
+
+    for obj in objects:
+        obj.put(Body=body)
+        obj.wait_until_exists()
+
+    return objects
+
+
+def fetch_messages(queue: Queue) -> Iterator[Message]:
+    while messages := queue.receive_messages(
+        MaxNumberOfMessages=10, WaitTimeSeconds=20
+    ):
+        queue.delete_messages(
+            Entries=[
+                {"Id": message.message_id, "ReceiptHandle": message.receipt_handle}
+                for message in messages
+            ]
+        )
+
+        yield from messages
