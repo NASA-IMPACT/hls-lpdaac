@@ -13,7 +13,7 @@ s3 = boto3.resource("s3")
 
 
 def handler(event: "S3Event", _: "Context") -> None:
-    return _handler(
+    return _handler(  # pragma: no cover
         event,
         lpdaac_queue_url=os.environ["LPDAAC_QUEUE_URL"],
         tiler_queue_url=os.environ["TILER_QUEUE_URL"],
@@ -32,9 +32,11 @@ def _handler(event: "S3Event", *, lpdaac_queue_url: str, tiler_queue_url: str) -
     json_contents = s3.Object(bucket, json_key).get()["Body"].read().decode("utf-8")
     _send_message(lpdaac_queue_url, key=json_key, message=json_contents)
 
-    stac_json_key = json_key.replace(".json", "_stac.json")
-    stac_url = f"s3://{bucket}/{stac_json_key}"
-    _send_message(tiler_queue_url, key=stac_json_key, message=stac_url)
+    # Send message to tiler queue ONLY for non-VI files
+    if "_VI/" not in json_key:
+        stac_json_key = json_key.replace(".json", "_stac.json")
+        stac_url = f"s3://{bucket}/{stac_json_key}"
+        _send_message(tiler_queue_url, key=stac_json_key, message=stac_url)
 
 
 def _send_message(queue_url: str, *, key: str, message: str) -> None:

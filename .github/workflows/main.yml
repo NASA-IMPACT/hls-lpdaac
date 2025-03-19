@@ -62,7 +62,7 @@ jobs:
     # Alternative hack: https://github.com/actions/runner/issues/1182#issuecomment-1262870831
     runs-on: ubuntu-22.04
     outputs:
-      PYTHON_VERSION: "3.9"
+      PYTHON_VERSION: "3.12"
       TOX_MIN_VERSION: "3.18.0"  # `allowlist_externals` replaces `whitelist_externals`
     steps:
       - name: Configure shared values
