@@ -29,16 +29,16 @@ def test_lpdaac_forward_handler(
 
     bucket = s3_event["Records"][0]["s3"]["bucket"]["name"]  # type: ignore
     key = s3_event["Records"][0]["s3"]["object"]["key"]  # type: ignore
-    messages = [
+    messages = {
         message.body for message in sqs_queue.receive_messages(MaxNumberOfMessages=10)
-    ]
-    expected_messages = [
+    }
+    expected_messages = {
         s3_object.get()["Body"].read().decode("utf-8"),
         *(
             [f"s3://{bucket}/{key.replace('.json', '_stac.json')}"]
             if expect_tiler_message
             else []
         ),
-    ]
+    }
 
     assert messages == expected_messages

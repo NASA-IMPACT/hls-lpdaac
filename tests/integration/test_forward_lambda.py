@@ -5,7 +5,7 @@ from typing import Iterator, Sequence
 from mypy_boto3_s3 import S3ServiceResource
 from mypy_boto3_s3.service_resource import Bucket, Object
 from mypy_boto3_sqs import SQSServiceResource
-from mypy_boto3_sqs.service_resource import Message, Queue
+from mypy_boto3_sqs.service_resource import Queue
 from mypy_boto3_ssm import SSMClient
 
 
@@ -39,11 +39,11 @@ def test_notification(
 
     # We expect only 2 messages for the 2 non-VI objects written
     assert len(tiler_messages) == 2
-    assert tiler_messages == [
+    assert set(tiler_messages) == {  # Set comparison ignores potential order difference
         f"s3://{bucket_name}/{obj.key.replace('.json', '_stac.json')}"
         for obj in objects
         if "_VI/" not in obj.key
-    ]
+    }
 
 
 def ssm_param_value(ssm: SSMClient, name: str) -> str:
