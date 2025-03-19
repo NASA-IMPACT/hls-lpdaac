@@ -35,17 +35,15 @@ def test_notification(
             obj.wait_until_not_exists()
 
     # We expect 4 messages, 2 for regular and 2 for VI
-    assert len(forward_messages) == 4
-    assert forward_messages[0].body == body
+    assert forward_messages == [body] * 4
 
     # We expect only 2 messages for the 2 non-VI objects written
     assert len(tiler_messages) == 2
-    expected_bodies = [
+    assert tiler_messages == [
         f"s3://{bucket_name}/{obj.key.replace('.json', '_stac.json')}"
         for obj in objects
-        if "_VI" in obj.key
+        if "_VI/" not in obj.key
     ]
-    assert all(message.body in expected_bodies for message in tiler_messages)
 
 
 def ssm_param_value(ssm: SSMClient, name: str) -> str:
@@ -72,7 +70,7 @@ def write_objects(bucket: Bucket, body: str) -> Sequence[Object]:
     return objects
 
 
-def fetch_messages(queue: Queue) -> Iterator[Message]:
+def fetch_messages(queue: Queue) -> Iterator[str]:
     while messages := queue.receive_messages(
         MaxNumberOfMessages=10, WaitTimeSeconds=20
     ):
@@ -83,4 +81,4 @@ def fetch_messages(queue: Queue) -> Iterator[Message]:
             ]
         )
 
-        yield from messages
+        yield from (message.body for message in messages)
