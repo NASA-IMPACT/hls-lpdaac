@@ -37,8 +37,8 @@ extras_require = {
 
 setup(
     name="hls-lpdaac",
-    version="0.0.1",
-    python_requires=">=3.9",
+    version="1.1",
+    python_requires=">=3.12",
     author="Development Seed",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
