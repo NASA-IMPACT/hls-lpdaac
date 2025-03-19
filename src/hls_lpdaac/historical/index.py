@@ -11,7 +11,7 @@ s3 = boto3.resource("s3")
 
 
 def handler(event: "S3Event", _: "Context") -> None:
-    _handler(event, os.environ["QUEUE_URL"])
+    _handler(event, os.environ["QUEUE_URL"])  # pragma: no cover
 
 
 # Enables unit testing without the need to monkeypatch `os.environ` (which would
