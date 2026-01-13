@@ -19,12 +19,15 @@ def test_notification(
     bucket = s3.Bucket(bucket_name)
     forward_queue_name = ssm_param_value(ssm, "/hls/tests/forward-queue-name")
     forward_queue = sqs.get_queue_by_name(QueueName=forward_queue_name)
+    tiler_queue_name = ssm_param_value(ssm, "/hls/tests/tiler-queue-name")
+    tiler_queue = sqs.get_queue_by_name(QueueName=tiler_queue_name)
 
     body = '{ "greeting": "hello world!" }'
     objects = write_objects(bucket, body)
 
     try:
         forward_messages = list(fetch_messages(forward_queue))
+        tiler_messages = list(fetch_messages(tiler_queue))
     finally:
         # Cleanup S3 Object with .v2.0.json suffix from source bucket.
         for obj in objects:
@@ -33,6 +36,14 @@ def test_notification(
 
     # We expect 4 messages, 2 for regular and 2 for VI
     assert forward_messages == [body] * 4
+
+    # We expect only 2 messages for the 2 non-VI objects written
+    assert len(tiler_messages) == 2
+    assert set(tiler_messages) == {  # Set comparison ignores potential order difference
+        f"s3://{bucket_name}/{obj.key.replace('.json', '_stac.json')}"
+        for obj in objects
+        if "_VI/" not in obj.key
+    }
 
 
 def ssm_param_value(ssm: SSMClient, name: str) -> str:
@@ -44,7 +55,8 @@ def ssm_param_value(ssm: SSMClient, name: str) -> str:
 
 def write_objects(bucket: Bucket, body: str) -> Sequence[Object]:
     # Write S3 Objects with .v2.0.json suffix to source bucket to trigger notification.
-    # We expect 4 messages in the forward queue
+    # We expect 4 messages in the forward queue and 2 in the tiler queue because the
+    # tiler queue should not send messages for VI.
 
     objects = [
         bucket.Object(f"{prefix}/greeting.v2.0.json")

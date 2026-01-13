@@ -25,6 +25,7 @@ export HLS_LPDAAC_STACK=<stack name>
 export HLS_LPDAAC_BUCKET_NAME=<source bucket name>
 export HLS_LPDAAC_QUEUE_ARN=<destination queue ARN>
 # Required ONLY in PROD for FORWARD processing (otherwise, a dummy queue is created)
+export HLS_LPDAAC_TILER_QUEUE_ARN=<tiler queue ARN>
 export HLS_LPDAAC_MANAGED_POLICY_NAME=mcp-tenantOperator
 ```
 

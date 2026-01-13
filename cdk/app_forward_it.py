@@ -20,6 +20,7 @@ stack_under_test = ForwardNotificationStack(
     "hls-forward-under-test",
     bucket_name=it_stack.bucket.bucket_name,
     lpdaac_queue_arn=it_stack.forward_queue.queue_arn,
+    tiler_queue_arn=it_stack.tiler_queue.queue_arn,
     managed_policy_name=managed_policy_name,
 )
 

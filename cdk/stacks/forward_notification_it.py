@@ -34,6 +34,7 @@ class NotificationITStack(Stack):
             auto_delete_objects=True,
         )
         self.forward_queue = sqs.Queue(self, "forward-queue")
+        self.tiler_queue = sqs.Queue(self, "tiler-queue")
 
         # Set SSM Parameters for use within integration tests
 
@@ -49,4 +50,11 @@ class NotificationITStack(Stack):
             "forward-queue-name",
             string_value=self.forward_queue.queue_name,
             parameter_name="/hls/tests/forward-queue-name",
+        )
+
+        ssm.StringParameter(
+            self,
+            "tiler-queue-name",
+            string_value=self.tiler_queue.queue_name,
+            parameter_name="/hls/tests/tiler-queue-name",
         )

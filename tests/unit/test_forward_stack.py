@@ -18,6 +18,7 @@ def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
         "forward-notification",
         bucket_name=s3_bucket.name,
         lpdaac_queue_arn=sqs_queue.attributes["QueueArn"],
+        tiler_queue_arn=sqs_queue.attributes["QueueArn"],
     )
 
     template = Template.from_stack(stack)
@@ -40,6 +41,7 @@ def test_lambda_environment(s3_bucket: "Bucket", sqs_queue: "Queue"):
             "Environment": {
                 "Variables": {
                     "LPDAAC_QUEUE_URL": Match.object_like({"Fn::Join": args}),
+                    "TILER_QUEUE_URL": Match.object_like({"Fn::Join": args}),
                 }
             }
         },
