@@ -73,9 +73,9 @@ jobs:
     needs: config
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
           cache: 'pip'
@@ -93,9 +93,9 @@ jobs:
     needs: config
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "${{ needs.config.outputs.PYTHON_VERSION }}"
           cache: 'pip'
@@ -109,24 +109,25 @@ jobs:
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_ARN }}
           role-session-name: ${{ github.actor }}
-      - name: Convert secrets to environment variables
-        env:
-          SECRETS_JSON: ${{ toJson(secrets) }}
+      - name: Convert secrets and vars to environment variables
+        shell: python
         run: |
-          while read -rd $'' line; do
-            echo "$line" >> $GITHUB_ENV
-          done < <(
-            jq -r <<<"$SECRETS_JSON" 'to_entries|map("\(.key)=\(.value)\u0000")[]'
-          )
-      - name: Convert vars to environment variables
-        env:
-          VARS_JSON: ${{ toJson(vars) }}
-        run: |
-          while read -rd $'' line; do
-            echo "$line" >> $GITHUB_ENV
-          done < <(
-            jq -r <<<"$VARS_JSON" 'to_entries|map("\(.key)=\(.value)\u0000")[]'
-          )
+          import os
+
+          secrets_and_vars = {
+              **${{ toJson(secrets) }},
+              **${{ toJson(vars) }},
+          }
+
+          with open(os.environ["GITHUB_ENV"], "a") as env_file:
+              for name, value in secrets_and_vars.items():
+                  # If the value contains a newline, use the delimiter syntax
+                  # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#multiline-strings
+                  if "\n" in value:
+                      print(f"{name}<<EOF\n{value}\nEOF", file=env_file)
+                  else:
+                      # Standard format for single lines
+                      print(f"{name}={value}", file=env_file)
       - name: Deploy forward notification integration test stack
         run: |
           make deploy-forward-it
@@ -148,6 +149,7 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: dev-forward
+      target: forward
       PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
       TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
@@ -162,6 +164,37 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod-forward
+      target: forward
+      PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
+    secrets: inherit
+
+  deploy-dev-historical:
+    # Deploy to Dev only on push (including merged PR) to `develop` branch
+    if: github.event_name == 'push' && github.event.ref == 'refs/heads/develop'
+    needs:
+      - config
+      - unit-tests
+      - integration-tests
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: dev-historical
+      target: historical
+      PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
+      TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
+    secrets: inherit
+
+  deploy-prod-historical:
+    # Deploy to Prod only on publishing a release (tag) on `main` branch
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs:
+      - config
+      - unit-tests
+      - integration-tests
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod-historical
+      target: historical
       PYTHON_VERSION: "${{ needs.config.outputs.PYTHON_VERSION }}"
       TOX_MIN_VERSION: "${{ needs.config.outputs.TOX_MIN_VERSION }}"
     secrets: inherit
