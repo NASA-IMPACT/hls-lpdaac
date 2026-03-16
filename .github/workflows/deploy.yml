@@ -9,10 +9,7 @@ on:
         type: string
       target:
         required: true
-        type: choice
-        options:
-          - forward
-          - historical
+        type: string
       PYTHON_VERSION:
         required: true
         type: string
