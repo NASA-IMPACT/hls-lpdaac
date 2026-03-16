@@ -7,6 +7,12 @@ on:
       environment:
         required: true
         type: string
+      target:
+        required: true
+        type: choice
+        options:
+          - forward
+          - historical
       PYTHON_VERSION:
         required: true
         type: string
@@ -64,6 +70,6 @@ jobs:
                   else:
                       # Standard format for single lines
                       print(f"{name}={value}", file=env_file)
-      - name: Deploy forward notification to ${{ inputs.environment }}
+      - name: Deploy ${{ inputs.target }} notification to ${{ inputs.environment }}
         run: |
-          make deploy-forward
+          make deploy-${{ inputs.target }}
