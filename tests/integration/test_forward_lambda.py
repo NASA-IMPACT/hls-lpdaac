@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Iterator, Sequence
 
 from mypy_boto3_s3 import S3ServiceResource
@@ -31,8 +32,11 @@ def test_notification(
             obj.delete()
             obj.wait_until_not_exists()
 
+    # The forwarder adds the provider naming the LPDAAC queue it publishes to.
+    expected = {**json.loads(body), "provider": "lp_HLS_2.0_FORWARD_PROCESSED"}
+
     # We expect 4 messages, 2 for regular and 2 for VI
-    assert forward_messages == [body] * 4
+    assert [json.loads(message) for message in forward_messages] == [expected] * 4
 
 
 def ssm_param_value(ssm: SSMClient, name: str) -> str:
