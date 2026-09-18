@@ -11,8 +11,9 @@ from mypy_boto3_s3 import S3ServiceResource
 from mypy_boto3_s3.service_resource import Bucket, Object
 from mypy_boto3_sqs import SQSServiceResource
 from mypy_boto3_sqs.service_resource import Queue
+from mypy_boto3_ssm import SSMClient
 
-from hls_lpdaac.aws import s3_resource, sqs_client
+from hls_lpdaac.aws import s3_resource, sqs_client, ssm_client
 
 CNM_MANIFEST: dict[str, Any] = {
     "collection": "HLSS30",
@@ -43,11 +44,13 @@ def clear_boto3_caches():
     """Keep a cached client from outliving the mock context that created it."""
     s3_resource.cache_clear()
     sqs_client.cache_clear()
+    ssm_client.cache_clear()
 
     yield
 
     s3_resource.cache_clear()
     sqs_client.cache_clear()
+    ssm_client.cache_clear()
 
 
 @pytest.fixture(scope="function")
@@ -94,3 +97,14 @@ def sqs(aws_credentials) -> Iterator[SQSServiceResource]:
 @pytest.fixture(scope="function")
 def sqs_queue(sqs: SQSServiceResource) -> Queue:
     return sqs.create_queue(QueueName="myqueue")
+
+
+@pytest.fixture(scope="function")
+def dead_letter_queue(sqs: SQSServiceResource) -> Queue:
+    return sqs.create_queue(QueueName="mydlq")
+
+
+@pytest.fixture(scope="function")
+def ssm(aws_credentials) -> Iterator[SSMClient]:
+    with mock_aws():
+        yield boto3.client("ssm")
