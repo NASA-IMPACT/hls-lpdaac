@@ -52,6 +52,8 @@ class NotificationStack(Stack):
             self,
             "HistoricalNotificationDLQ",
             retention_period=Duration.days(14),
+            encryption=sqs.QueueEncryption.SQS_MANAGED,
+            enforce_ssl=True,
         )
         # A visibility timeout below the function timeout would redeliver a
         # message while the first invocation is still forwarding it.
@@ -59,6 +61,8 @@ class NotificationStack(Stack):
             self,
             "HistoricalNotificationQueue",
             retention_period=Duration.days(14),
+            encryption=sqs.QueueEncryption.SQS_MANAGED,
+            enforce_ssl=True,
             visibility_timeout=Duration.seconds(6 * LAMBDA_TIMEOUT.to_seconds()),
             dead_letter_queue=sqs.DeadLetterQueue(
                 max_receive_count=3,
