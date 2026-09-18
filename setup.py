@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup  # type: ignore
 
 aws_cdk_extras = [
-    "aws-cdk-lib>=2.0.0",
+    "aws-cdk-lib>=2.100.0",
     "constructs>=10.0.0",
 ]
 
