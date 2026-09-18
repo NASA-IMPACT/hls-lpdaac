@@ -9,6 +9,7 @@ install_requires: list[str] = []
 
 extras_require_test = [
     *aws_cdk_extras,
+    "hls_manifest @ https://github.com/NASA-IMPACT/hls-manifest/releases/download/v2.6/hls_manifest-2.6-py3-none-any.whl",
     "flake8~=7.0",
     "black~=24.1",
     "boto3~=1.34",

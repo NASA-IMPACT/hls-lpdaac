@@ -12,6 +12,8 @@ from mypy_boto3_s3.service_resource import Bucket, Object
 from mypy_boto3_sqs import SQSServiceResource
 from mypy_boto3_sqs.service_resource import Queue
 
+from hls_lpdaac.aws import s3_resource, sqs_client
+
 CNM_MANIFEST: dict[str, Any] = {
     "collection": "HLSS30",
     "identifier": "test-job",
@@ -34,6 +36,18 @@ CNM_MANIFEST: dict[str, Any] = {
         ],
     },
 }
+
+
+@pytest.fixture(autouse=True)
+def clear_boto3_caches():
+    """Keep a cached client from outliving the mock context that created it."""
+    s3_resource.cache_clear()
+    sqs_client.cache_clear()
+
+    yield
+
+    s3_resource.cache_clear()
+    sqs_client.cache_clear()
 
 
 @pytest.fixture(scope="function")

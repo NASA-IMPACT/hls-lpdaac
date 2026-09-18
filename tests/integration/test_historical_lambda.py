@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -44,9 +45,12 @@ def test_notification(
         obj.delete()
         obj.wait_until_not_exists()
 
-    # Assert message contents == S3 Object contents (written above)
+    # Assert message contents == S3 Object contents (written above), plus the
+    # provider naming the LPDAAC queue the forwarder publishes to.
+    expected = {**json.loads(body), "provider": "lp_HLS_2.0_BACKWARD_PROCESSED"}
+
     assert len(messages) == 1
-    assert messages[0].body == body
+    assert json.loads(messages[0].body) == expected
 
 
 def ssm_param_value(ssm: SSMClient, name: str) -> str:
