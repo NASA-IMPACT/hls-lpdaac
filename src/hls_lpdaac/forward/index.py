@@ -5,14 +5,16 @@ from typing import TYPE_CHECKING
 
 import boto3
 
+from hls_lpdaac.events import s3_object_refs
+
 if TYPE_CHECKING:  # pragma: no cover
     from aws_lambda_typing.context import Context
-    from aws_lambda_typing.events import S3Event
+    from aws_lambda_typing.events import SQSEvent
 
 s3 = boto3.resource("s3")
 
 
-def handler(event: "S3Event", _: "Context") -> None:
+def handler(event: "SQSEvent", _: "Context") -> dict:
     return _handler(  # pragma: no cover
         event,
         lpdaac_queue_url=os.environ["LPDAAC_QUEUE_URL"],
@@ -21,15 +23,18 @@ def handler(event: "S3Event", _: "Context") -> None:
 
 # Enables unit testing without the need to monkeypatch `os.environ` (which would
 # be necessary to test `handler` above).
-def _handler(event: "S3Event", *, lpdaac_queue_url: str) -> None:
-    # The S3Event type is not quite correct, so we are forced to ignore a couple
-    # of typing errors that would not occur if the type were defined correctly.
-    s3_object = event["Records"][0]["s3"]  # type: ignore
-    bucket = s3_object["bucket"]["name"]
+def _handler(event: "SQSEvent", *, lpdaac_queue_url: str) -> dict:
+    failures: list[dict[str, str]] = []
 
-    json_key = s3_object["object"]["key"]  # type: ignore
-    json_contents = s3.Object(bucket, json_key).get()["Body"].read().decode("utf-8")
-    _send_message(lpdaac_queue_url, key=json_key, message=json_contents)
+    for message_id, bucket, key in s3_object_refs(event):
+        try:
+            message = s3.Object(bucket, key).get()["Body"].read().decode("utf-8")
+            _send_message(lpdaac_queue_url, key=key, message=message)
+        except Exception as e:
+            print(f"Failed to forward s3://{bucket}/{key} - {e!r}")
+            failures.append({"itemIdentifier": message_id})
+
+    return {"batchItemFailures": failures}
 
 
 def _send_message(queue_url: str, *, key: str, message: str) -> None:

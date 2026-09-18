@@ -12,6 +12,9 @@ queue_arn = os.environ["HLS_LPDAAC_QUEUE_ARN"]
 
 # Optional environment variables
 managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
+paused = os.getenv("HLS_LPDAAC_PAUSED", "false").lower() in ("1", "true", "yes")
+max_concurrency = int(os.getenv("HLS_LPDAAC_MAX_CONCURRENCY", "5"))
+batch_size = int(os.getenv("HLS_LPDAAC_BATCH_SIZE", "10"))
 
 app = App()
 
@@ -21,6 +24,9 @@ HistoricalNotificationStack(
     bucket_name=bucket_name,
     queue_arn=queue_arn,
     managed_policy_name=managed_policy_name,
+    paused=paused,
+    max_concurrency=max_concurrency,
+    batch_size=batch_size,
 )
 
 for k, v in dict(

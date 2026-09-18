@@ -55,7 +55,7 @@ install-cdk: install-node
 bootstrap:
 	$(TOX) $(RECREATE) -e dev -- bootstrap \
 	    --toolkit-stack-name CDKToolkitV2 \
-	    --custom-permissions-boundary mcp-tenantOperator \
+	    --custom-permissions-boundary mcp-tenantOperator-APIG \
 	    --template cdk/bootstrap-template.yaml
 
 ## unit-tests: Run unit tests

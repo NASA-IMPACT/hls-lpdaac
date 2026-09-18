@@ -2,6 +2,23 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Target GitHub environment
+        required: true
+        type: choice
+        options:
+          - dev-forward
+          - prod-forward
+          - dev-historical
+          - prod-historical
+      target:
+        description: CDK app to deploy (must match the environment suffix)
+        required: true
+        type: choice
+        options:
+          - forward
+          - historical
   workflow_call:
     inputs:
       environment:
@@ -31,17 +48,26 @@ jobs:
     runs-on: ubuntu-22.04
     environment: ${{ inputs.environment }}
     steps:
+      - name: Check the target matches the environment
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          if [[ "${ENVIRONMENT}" != *"-${TARGET}" ]]; then
+            echo "Environment '${ENVIRONMENT}' does not match target '${TARGET}'" >&2
+            exit 1
+          fi
       - name: Checkout source
         uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "${{ inputs.PYTHON_VERSION }}"
+          python-version: "${{ inputs.PYTHON_VERSION || '3.12' }}"
           cache: 'pip'
           cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
-          pip install "tox>=${{ inputs.TOX_MIN_VERSION }}"
+          pip install "tox>=${{ inputs.TOX_MIN_VERSION || '3.18.0' }}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -69,4 +95,5 @@ jobs:
                       print(f"{name}={value}", file=env_file)
       - name: Deploy ${{ inputs.target }} notification to ${{ inputs.environment }}
         run: |
+          echo "Notification delivery paused: ${HLS_LPDAAC_PAUSED:-false}" | tee -a "$GITHUB_STEP_SUMMARY"
           make deploy-${{ inputs.target }}

@@ -3,10 +3,15 @@ from typing import Optional
 from aws_cdk import Duration, Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_lambda_event_sources as lambda_event_sources
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_notifications as s3n
 from aws_cdk import aws_sqs as sqs
 from constructs import Construct
+
+ASSET_ROOT = "src"
+HANDLER = "hls_lpdaac.historical.index.handler"
+LAMBDA_TIMEOUT = Duration.seconds(30)
 
 
 class NotificationStack(Stack):
@@ -18,6 +23,9 @@ class NotificationStack(Stack):
         bucket_name: str,
         queue_arn: str,
         managed_policy_name: Optional[str] = None,
+        paused: bool = False,
+        max_concurrency: int = 5,
+        batch_size: int = 10,
     ) -> None:
         super().__init__(scope, stack_name)
 
@@ -42,22 +50,57 @@ class NotificationStack(Stack):
             queue_arn=queue_arn,
         )
 
+        self.notification_dead_letter_queue = sqs.Queue(
+            self,
+            "HistoricalNotificationDLQ",
+            retention_period=Duration.days(14),
+            encryption=sqs.QueueEncryption.SQS_MANAGED,
+            enforce_ssl=True,
+        )
+        # A visibility timeout below the function timeout would redeliver a
+        # message while the first invocation is still forwarding it.
+        self.notification_queue = sqs.Queue(
+            self,
+            "HistoricalNotificationQueue",
+            retention_period=Duration.days(14),
+            encryption=sqs.QueueEncryption.SQS_MANAGED,
+            enforce_ssl=True,
+            visibility_timeout=Duration.seconds(6 * LAMBDA_TIMEOUT.to_seconds()),
+            dead_letter_queue=sqs.DeadLetterQueue(
+                max_receive_count=3,
+                queue=self.notification_dead_letter_queue,
+            ),
+        )
+
         self.lpdaac_historical_lambda = lambda_.Function(
             self,
             "HistoricalLambda",
-            code=lambda_.Code.from_asset("src/hls_lpdaac/historical"),
-            handler="index.handler",
+            code=lambda_.Code.from_asset(
+                ASSET_ROOT,
+                exclude=["**/__pycache__", "*.egg-info"],
+            ),
+            handler=HANDLER,
             runtime=lambda_.Runtime.PYTHON_3_12,
             memory_size=128,
-            timeout=Duration.seconds(30),
+            timeout=LAMBDA_TIMEOUT,
             environment=dict(QUEUE_URL=self.lpdaac_historical_queue.queue_url),
         )
 
         # Wire everything up
 
+        self.lpdaac_historical_lambda.add_event_source(
+            lambda_event_sources.SqsEventSource(
+                self.notification_queue,
+                batch_size=batch_size,
+                max_concurrency=max_concurrency,
+                report_batch_item_failures=True,
+                enabled=not paused,
+            )
+        )
+
         self.lpdaac_historical_queue.grant_send_messages(self.lpdaac_historical_lambda)
         self.lpdaac_historical_bucket.grant_read(self.lpdaac_historical_lambda)
         self.lpdaac_historical_bucket.add_object_created_notification(
-            s3n.LambdaDestination(self.lpdaac_historical_lambda),  # type: ignore
+            s3n.SqsDestination(self.notification_queue),  # type: ignore
             s3.NotificationKeyFilter(suffix=".v2.0.json"),
         )
