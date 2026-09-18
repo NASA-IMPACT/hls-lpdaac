@@ -1,33 +1,45 @@
+from __future__ import annotations
+
 import os
 from typing import TYPE_CHECKING
 
 import boto3
 
+from hls_lpdaac.events import s3_object_refs
+
 if TYPE_CHECKING:  # pragma: no cover
     from aws_lambda_typing.context import Context
-    from aws_lambda_typing.events import S3Event
+    from aws_lambda_typing.events import SQSEvent
 
 s3 = boto3.resource("s3")
 
 
-def handler(event: "S3Event", _: "Context") -> None:
-    _handler(event, os.environ["QUEUE_URL"])  # pragma: no cover
+def handler(event: "SQSEvent", _: "Context") -> dict:
+    return _handler(  # pragma: no cover
+        event,
+        queue_url=os.environ["QUEUE_URL"],
+    )
 
 
 # Enables unit testing without the need to monkeypatch `os.environ` (which would
 # be necessary to test `handler` above).
-def _handler(event: "S3Event", queue_url: str) -> None:
-    # The S3Event type is not quite correct, so we are forced to ignore a couple
-    # of typing errors that would not occur if the type were defined correctly.
-    s3_object = event["Records"][0]["s3"]  # type: ignore
-    bucket = s3_object["bucket"]["name"]
-    key = s3_object["object"]["key"]  # type: ignore
+def _handler(event: "SQSEvent", *, queue_url: str) -> dict:
+    failures: list[dict[str, str]] = []
 
-    message = s3.Object(bucket, key).get()["Body"].read().decode("utf-8")
+    for message_id, bucket, key in s3_object_refs(event):
+        try:
+            message = s3.Object(bucket, key).get()["Body"].read().decode("utf-8")
+            _send_message(queue_url, key=key, message=message)
+        except Exception as e:
+            print(f"Failed to forward s3://{bucket}/{key} - {e!r}")
+            failures.append({"itemIdentifier": message_id})
 
+    return {"batchItemFailures": failures}
+
+
+def _send_message(queue_url: str, *, key: str, message: str) -> None:
     region_name = queue_url.split(".")[1]
     sqs = boto3.client("sqs", region_name=region_name)
     response = sqs.send_message(QueueUrl=queue_url, MessageBody=message)
     status_code = response["ResponseMetadata"]["HTTPStatusCode"]
-
     print(f"Status Code - {status_code} - {key}")
