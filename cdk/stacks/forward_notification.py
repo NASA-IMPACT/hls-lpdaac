@@ -9,6 +9,8 @@ from aws_cdk import aws_s3_notifications as s3n
 from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
+ASSET_ROOT = "src"
+HANDLER = "hls_lpdaac.forward.index.handler"
 LAMBDA_TIMEOUT = Duration.seconds(30)
 
 
@@ -68,8 +70,11 @@ class NotificationStack(Stack):
         self.notification_function = lambda_.Function(
             self,
             "ForwardNotifier",
-            code=lambda_.Code.from_asset("src/hls_lpdaac"),
-            handler="forward.index.handler",
+            code=lambda_.Code.from_asset(
+                ASSET_ROOT,
+                exclude=["**/__pycache__", "*.egg-info"],
+            ),
+            handler=HANDLER,
             runtime=lambda_.Runtime.PYTHON_3_12,
             memory_size=128,
             timeout=LAMBDA_TIMEOUT,
