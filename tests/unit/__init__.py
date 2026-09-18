@@ -1,4 +1,6 @@
-from aws_lambda_typing.events import S3Event
+import json
+
+from aws_lambda_typing.events import S3Event, SQSEvent
 from mypy_boto3_s3.service_resource import Object
 
 
@@ -26,4 +28,22 @@ def make_s3_event(s3_object: Object) -> S3Event:
                 },
             },
         ],
+    }
+
+
+def make_sqs_event(s3_object: Object, message_id: str = "m1") -> SQSEvent:
+    return {
+        "Records": [
+            {
+                "messageId": message_id,
+                "receiptHandle": "",
+                "body": json.dumps(make_s3_event(s3_object)),
+                "attributes": {},
+                "messageAttributes": {},
+                "md5OfBody": "",
+                "eventSource": "aws:sqs",
+                "eventSourceARN": "",
+                "awsRegion": "us-east-1",
+            }
+        ]
     }
