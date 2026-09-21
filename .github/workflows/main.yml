@@ -91,6 +91,12 @@ jobs:
     runs-on: ubuntu-22.04
     environment: dev-forward
     needs: config
+    # The integration test stacks and resources are constant, so we can't
+    # have >1 integration test running at the same time. Queue instead of
+    # cancel.
+    concurrency:
+      group: integration-test-stacks
+      cancel-in-progress: false
     steps:
       - name: Checkout source
         uses: actions/checkout@v6
