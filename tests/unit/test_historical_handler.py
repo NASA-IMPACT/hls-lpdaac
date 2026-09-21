@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Callable
+from typing import Callable
 
+from aws_lambda_typing.events import SQSEvent
 from mypy_boto3_s3.service_resource import Bucket, Object
 from mypy_boto3_sqs.service_resource import Queue
 
@@ -10,9 +11,6 @@ from hls_lpdaac.historical.index import PROVIDER, _handler
 
 from . import make_sqs_event
 from .conftest import CNM_MANIFEST
-
-if TYPE_CHECKING:
-    from aws_lambda_typing.events import SQSEvent
 
 
 def test_forwards_manifest_from_sqs_event(

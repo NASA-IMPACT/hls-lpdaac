@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
+
+from aws_lambda_typing.events import SQSEvent
+from aws_lambda_typing.events.sqs import SQSMessage
 
 from hls_lpdaac.events import s3_object_refs
-
-if TYPE_CHECKING:
-    from aws_lambda_typing.events import SQSEvent
-    from aws_lambda_typing.events.sqs import SQSMessage
 
 
 def _sqs_record(message_id: str, body: dict) -> "SQSMessage":
