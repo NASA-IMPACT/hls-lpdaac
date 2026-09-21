@@ -1,6 +1,6 @@
-from typing import Optional
-
 from aws_cdk import Duration, Stack
+from aws_cdk import aws_events as events
+from aws_cdk import aws_events_targets as events_targets
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_lambda_event_sources as lambda_event_sources
@@ -10,6 +10,7 @@ from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
 ASSET_ROOT = "src"
+DLQ_ALERT_HANDLER = "hls_lpdaac.dlq_alert.handler"
 HANDLER = "hls_lpdaac.historical.index.handler"
 LAMBDA_TIMEOUT = Duration.seconds(30)
 
@@ -22,10 +23,12 @@ class NotificationStack(Stack):
         *,
         bucket_name: str,
         queue_arn: str,
-        managed_policy_name: Optional[str] = None,
+        managed_policy_name: None | str = None,
         paused: bool = False,
         max_concurrency: int = 5,
         batch_size: int = 10,
+        slack_webhook_url: None | str = None,
+        dlq_alert_schedule: None | events.Schedule = None,
     ) -> None:
         super().__init__(scope, stack_name)
 
@@ -103,4 +106,47 @@ class NotificationStack(Stack):
         self.lpdaac_historical_bucket.add_object_created_notification(
             s3n.SqsDestination(self.notification_queue),  # type: ignore
             s3.NotificationKeyFilter(suffix=".v2.0.json"),
+        )
+
+        # A dead-letter queue nobody watches is a delete, so alert on its depth.
+        # The resources always exist; without a webhook the schedule is created
+        # disabled, so turning alerting on is a configuration change rather than
+        # a create/delete of the function and its rule.
+        alert_state_ssm_path = f"/{stack_name}/dlq-alert-state"
+        self.dlq_alert_function = lambda_.Function(
+            self,
+            "DlqAlert",
+            code=lambda_.Code.from_asset(
+                ASSET_ROOT,
+                exclude=["**/__pycache__", "*.egg-info"],
+            ),
+            handler=DLQ_ALERT_HANDLER,
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            memory_size=128,
+            timeout=Duration.seconds(30),
+            environment=dict(
+                DLQ_URL=self.notification_dead_letter_queue.queue_url,
+                SLACK_WEBHOOK_URL=slack_webhook_url or "",
+                ALERT_STATE_SSM_PATH=alert_state_ssm_path,
+                STACK_NAME=stack_name,
+            ),
+        )
+        self.notification_dead_letter_queue.grant(
+            self.dlq_alert_function, "sqs:GetQueueAttributes"
+        )
+        self.dlq_alert_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["ssm:GetParameter", "ssm:PutParameter"],
+                resources=[
+                    f"arn:aws:ssm:{self.region}:{self.account}"
+                    f":parameter{alert_state_ssm_path}"
+                ],
+            )
+        )
+        events.Rule(
+            self,
+            "DlqAlertSchedule",
+            schedule=dlq_alert_schedule or events.Schedule.rate(Duration.minutes(15)),
+            targets=[events_targets.LambdaFunction(self.dlq_alert_function)],
+            enabled=bool(slack_webhook_url),
         )

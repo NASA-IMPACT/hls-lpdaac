@@ -1,5 +1,3 @@
-from typing import Optional
-
 from aws_cdk import RemovalPolicy, Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_s3 as s3
@@ -14,7 +12,7 @@ class NotificationITStack(Stack):
         scope: Construct,
         id: str,
         *,
-        managed_policy_name: Optional[str] = None,
+        managed_policy_name: None | str = None,
     ) -> None:
         super().__init__(scope, id)
 
