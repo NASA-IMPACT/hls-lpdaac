@@ -1,5 +1,3 @@
-from typing import Optional
-
 from aws_cdk import Duration, Stack
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as events_targets
@@ -25,12 +23,12 @@ class NotificationStack(Stack):
         *,
         bucket_name: str,
         lpdaac_queue_arn: str,
-        managed_policy_name: Optional[str] = None,
+        managed_policy_name: None | str = None,
         paused: bool = False,
         max_concurrency: int = 5,
         batch_size: int = 10,
-        slack_webhook_url: Optional[str] = None,
-        dlq_alert_cron: str = "rate(15 minutes)",
+        slack_webhook_url: None | str = None,
+        dlq_alert_schedule: None | events.Schedule = None,
     ) -> None:
         super().__init__(scope, stack_name)
 
@@ -145,7 +143,7 @@ class NotificationStack(Stack):
         events.Rule(
             self,
             "DlqAlertSchedule",
-            schedule=events.Schedule.expression(dlq_alert_cron),
+            schedule=dlq_alert_schedule or events.Schedule.rate(Duration.minutes(15)),
             targets=[events_targets.LambdaFunction(self.dlq_alert_function)],
             enabled=bool(slack_webhook_url),
         )
