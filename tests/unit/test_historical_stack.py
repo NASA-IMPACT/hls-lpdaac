@@ -1,14 +1,12 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urlparse
 
 from aws_cdk import App
 from aws_cdk.assertions import Match, Template
+from mypy_boto3_s3.service_resource import Bucket
+from mypy_boto3_sqs.service_resource import Queue
 
 from cdk.stacks import HistoricalNotificationStack
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3.service_resource import Bucket
-    from mypy_boto3_sqs.service_resource import Queue
 
 
 def _template(s3_bucket: "Bucket", sqs_queue: "Queue", **kwargs: Any) -> Template:

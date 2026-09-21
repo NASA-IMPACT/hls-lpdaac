@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import boto3
 import pytest
-
-if TYPE_CHECKING:
-    from mypy_boto3_lambda import LambdaClient
-    from mypy_boto3_s3 import S3ServiceResource
-    from mypy_boto3_sqs import SQSServiceResource
-    from mypy_boto3_ssm import SSMClient
+from mypy_boto3_lambda import LambdaClient
+from mypy_boto3_s3 import S3ServiceResource
+from mypy_boto3_sqs import SQSServiceResource
+from mypy_boto3_ssm import SSMClient
 
 
 @pytest.fixture

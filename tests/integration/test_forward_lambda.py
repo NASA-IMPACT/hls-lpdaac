@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
-from typing import Iterator, Sequence
+from typing import Sequence
 
 from mypy_boto3_s3 import S3ServiceResource
 from mypy_boto3_s3.service_resource import Bucket, Object
 from mypy_boto3_sqs import SQSServiceResource
-from mypy_boto3_sqs.service_resource import Queue
 from mypy_boto3_ssm import SSMClient
+
+from .helpers import fetch_messages, remaining_messages, ssm_param_value
 
 
 def test_notification(
@@ -25,7 +26,9 @@ def test_notification(
     objects = write_objects(bucket, body)
 
     try:
-        forward_messages = list(fetch_messages(forward_queue))
+        # We expect 4 messages, 2 for regular and 2 for VI
+        forward_messages = fetch_messages(forward_queue, expected=4)
+        extra_messages = remaining_messages(forward_queue)
     finally:
         # Cleanup S3 Object with .v2.0.json suffix from source bucket.
         for obj in objects:
@@ -35,15 +38,8 @@ def test_notification(
     # The forwarder adds the provider naming the LPDAAC queue it publishes to.
     expected = {**json.loads(body), "provider": "lp_HLS_2.0_FORWARD_PROCESSED"}
 
-    # We expect 4 messages, 2 for regular and 2 for VI
     assert [json.loads(message) for message in forward_messages] == [expected] * 4
-
-
-def ssm_param_value(ssm: SSMClient, name: str) -> str:
-    value = ssm.get_parameter(Name=name)["Parameter"].get("Value")
-    assert value is not None  # make type checker happy
-
-    return value
+    assert extra_messages == []
 
 
 def write_objects(bucket: Bucket, body: str) -> Sequence[Object]:
@@ -60,17 +56,3 @@ def write_objects(bucket: Bucket, body: str) -> Sequence[Object]:
         obj.wait_until_exists()
 
     return objects
-
-
-def fetch_messages(queue: Queue) -> Iterator[str]:
-    while messages := queue.receive_messages(
-        MaxNumberOfMessages=10, WaitTimeSeconds=20
-    ):
-        queue.delete_messages(
-            Entries=[
-                {"Id": message.message_id, "ReceiptHandle": message.receipt_handle}
-                for message in messages
-            ]
-        )
-
-        yield from (message.body for message in messages)
