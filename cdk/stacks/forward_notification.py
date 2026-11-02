@@ -2,7 +2,8 @@ from typing import Any
 
 from constructs import Construct
 
-from .notification import ConstructIds, NotificationStack as BaseNotificationStack
+from .notification import ConstructIds
+from .notification import NotificationStack as BaseNotificationStack
 
 HANDLER = "hls_lpdaac.forward.index.handler"
 QUEUE_URL_VARIABLE = "LPDAAC_QUEUE_URL"
