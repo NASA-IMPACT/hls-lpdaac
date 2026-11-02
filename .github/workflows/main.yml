@@ -54,8 +54,8 @@ env:
   UV_LOCKED: "1"
 
 jobs:
-  checks:
-    runs-on: ubuntu-22.04
+  unit-tests:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v6
@@ -70,7 +70,7 @@ jobs:
         run: make check
 
   integration-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     environment: dev-forward
     # The integration test stacks and resources are constant, so we can't
     # have >1 integration test running at the same time. Queue instead of
@@ -125,7 +125,7 @@ jobs:
     # Deploy to Dev only on push (including merged PR) to `main` branch
     if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
     needs:
-      - checks
+      - unit-tests
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
@@ -137,7 +137,7 @@ jobs:
     # Deploy to Prod only on publishing a release (tag) on `main` branch
     if: github.event_name == 'release' && github.event.action == 'published'
     needs:
-      - checks
+      - unit-tests
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
@@ -149,7 +149,7 @@ jobs:
     # Deploy to Dev only on push (including merged PR) to `main` branch
     if: github.event_name == 'push' && github.event.ref == 'refs/heads/main'
     needs:
-      - checks
+      - unit-tests
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
@@ -161,7 +161,7 @@ jobs:
     # Deploy to Prod only on publishing a release (tag) on `main` branch
     if: github.event_name == 'release' && github.event.action == 'published'
     needs:
-      - checks
+      - unit-tests
       - integration-tests
     uses: ./.github/workflows/deploy.yml
     with:
