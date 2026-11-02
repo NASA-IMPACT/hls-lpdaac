@@ -1,9 +1,18 @@
 {
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.extraPaths": [
+    "./cdk",
     "./src",
     "./tests"
   ],
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
   "yaml.schemas": {
     "https://json.schemastore.org/github-workflow.json": "file://./.github/workflows/deploy.yml"
   }

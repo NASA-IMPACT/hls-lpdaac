@@ -2,11 +2,13 @@
 
 ## Requirements
 
-- [pre-commit](https://pre-commit.com/)
-- Python >= 3.12
-- tox
+- [uv](https://docs.astral.sh/uv/) (installs Python, the virtualenv and every dev tool)
 - AWS CLI
 - AWS IAM role with sufficient permissions for creating, destroying and modifying relevant stack resources
+
+`uv` reads the Python version from `.python-version` and the dependencies from `pyproject.toml`/`uv.lock`, so no other
+Python tooling needs to be installed. The CDK CLI is a Node package; `make` installs Node and the CLI into `.venv`, so
+Node does not need to be installed globally either.
 
 ## Environment Settings
 
@@ -120,31 +122,40 @@ make destroy-<APP>
 
 ### Development
 
-For active stack development run
+Create the virtualenv in `.venv` and install the pre-commit hooks:
 
 ```plain
-tox -e dev -r -- version
+make install
 ```
 
-This creates a local virtualenv in the directory `.venv`. To use it for development:
+The hooks configured in `.pre-commit-config.yaml` then run on every commit. To run them over the whole tree:
+
+```plain
+uv run pre-commit run --all-files
+```
+
+Run any command inside the virtualenv with `uv run <command>`, or activate it the usual way:
 
 ```plain
 source .venv/bin/activate
 ```
 
-Install pre-commit hooks:
+`uv` keeps `.venv` in sync with `uv.lock` on every `uv run`, so there is no explicit "recreate the environment" step.
+After changing dependencies in `pyproject.toml`, refresh the lock file and commit it:
 
 ```plain
-pre-commit install --install-hooks
+uv lock
 ```
 
-The command above will make sure all pre-commit hooks configured in `.pre-commit-config.yaml` are executed when
-appropriate.
+### Lint, format and type checks
 
-To manually run the hooks to check code changes:
+[ruff](https://docs.astral.sh/ruff/) handles both linting and formatting, and [mypy](https://mypy-lang.org/) handles
+type checking. Their configuration lives in `pyproject.toml`.
 
 ```plain
-pre-commit run --all-files
+make lint       # ruff format --check + ruff check
+make format     # ruff check --fix + ruff format
+make typecheck  # mypy
 ```
 
 ### Tests
@@ -153,6 +164,12 @@ To run unit tests:
 
 ```plain
 make unit-tests
+```
+
+To run lint, type checks and unit tests together, as CI does:
+
+```plain
+make check
 ```
 
 To run integration tests for forward processing:
