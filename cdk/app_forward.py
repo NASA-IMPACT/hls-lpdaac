@@ -14,6 +14,11 @@ queue_arn = os.environ["HLS_LPDAAC_QUEUE_ARN"]
 # Optional environment variables
 managed_policy_name = os.getenv("HLS_LPDAAC_MANAGED_POLICY_NAME")
 paused = os.getenv("HLS_LPDAAC_PAUSED", "false").lower() in ("1", "true", "yes")
+inject_provider = os.getenv("HLS_LPDAAC_INJECT_PROVIDER", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 max_concurrency = int(os.getenv("HLS_LPDAAC_MAX_CONCURRENCY", "5"))
 batch_size = int(os.getenv("HLS_LPDAAC_BATCH_SIZE", "10"))
 slack_webhook_url = os.getenv("HLS_LPDAAC_SLACK_ALERT_WEBHOOK")
@@ -29,6 +34,7 @@ ForwardNotificationStack(
     lpdaac_queue_arn=queue_arn,
     managed_policy_name=managed_policy_name,
     paused=paused,
+    inject_provider=inject_provider,
     max_concurrency=max_concurrency,
     batch_size=batch_size,
     slack_webhook_url=slack_webhook_url,

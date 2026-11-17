@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from hls_lpdaac.notify import forward_notifications
+from hls_lpdaac.notify import forward_notifications, inject_provider_from_env
 
 if TYPE_CHECKING:  # pragma: no cover
     from aws_lambda_typing.context import Context
@@ -19,6 +19,7 @@ def handler(event: "SQSEvent", _: "Context") -> dict:
     return _handler(  # pragma: no cover
         event,
         queue_url=os.environ["QUEUE_URL"],
+        provider=PROVIDER if inject_provider_from_env() else None,
     )
 
 
@@ -28,6 +29,6 @@ def _handler(
     event: "SQSEvent",
     *,
     queue_url: str,
-    provider: str = PROVIDER,
+    provider: None | str = PROVIDER,
 ) -> dict:
     return forward_notifications(event, queue_url=queue_url, provider=provider)

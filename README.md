@@ -30,6 +30,7 @@ export HLS_LPDAAC_MANAGED_POLICY_NAME=mcp-tenantOperator-APIG
 
 # Optional notification delivery controls (defaults shown)
 export HLS_LPDAAC_PAUSED=false
+export HLS_LPDAAC_INJECT_PROVIDER=true
 export HLS_LPDAAC_MAX_CONCURRENCY=5
 export HLS_LPDAAC_BATCH_SIZE=10
 ```
@@ -78,6 +79,17 @@ declared by CDK.
 
 `HLS_LPDAAC_MAX_CONCURRENCY` caps concurrent forwarder invocations, smoothing bursts of notifications sent to LPDAAC,
 and is changed the same way.
+
+## Toggling the CNM `provider` field
+
+By default the forwarder adds a `provider` field (naming the LPDAAC queue) to each CNM message before sending it. Until
+LPDAAC is ready to accept it, set `HLS_LPDAAC_INJECT_PROVIDER=false` on the environment and redeploy to forward
+messages unchanged:
+
+```plain
+gh variable set HLS_LPDAAC_INJECT_PROVIDER --env prod-forward --body false
+gh workflow run deploy.yml -f environment=prod-forward -f target=forward
+```
 
 ## CDK Commands
 
