@@ -118,3 +118,18 @@ def test_reports_a_preset_provider_as_a_batch_item_failure(
 
     assert result == {"batchItemFailures": [{"itemIdentifier": "m1"}]}
     assert sqs_queue.receive_messages(MaxNumberOfMessages=10) == []
+
+
+def test_forwards_the_manifest_unchanged_without_a_provider(
+    make_s3_object_with_prefix: Callable[[str], Object],
+    sqs_queue: Queue,
+) -> None:
+    s3_object = make_s3_object_with_prefix("L30")
+    body = s3_object.get()["Body"].read().decode("utf-8")
+    result = _handler(
+        make_sqs_event(s3_object), lpdaac_queue_url=sqs_queue.url, provider=None
+    )
+
+    assert result == {"batchItemFailures": []}
+    messages = sqs_queue.receive_messages(MaxNumberOfMessages=10)
+    assert messages[0].body == body

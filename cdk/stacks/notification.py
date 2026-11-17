@@ -56,6 +56,7 @@ class NotificationStack(Stack):
         queue_url_variable: str,
         managed_policy_name: None | str = None,
         paused: bool = False,
+        inject_provider: bool = True,
         max_concurrency: int = 5,
         batch_size: int = 10,
         slack_webhook_url: None | str = None,
@@ -112,7 +113,10 @@ class NotificationStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_12,
             memory_size=128,
             timeout=LAMBDA_TIMEOUT,
-            environment={queue_url_variable: self.lpdaac_queue.queue_url},
+            environment={
+                queue_url_variable: self.lpdaac_queue.queue_url,
+                "INJECT_PROVIDER": "true" if inject_provider else "false",
+            },
         )
 
         # Wire everything up

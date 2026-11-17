@@ -1,6 +1,7 @@
 from typing import Any
 from urllib.parse import urlparse
 
+import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Match, Template
 from mypy_boto3_s3.service_resource import Bucket
@@ -113,4 +114,16 @@ def test_max_concurrency_is_configurable(s3_bucket: "Bucket", sqs_queue: "Queue"
     template.has_resource_properties(
         "AWS::Lambda::EventSourceMapping",
         {"ScalingConfig": {"MaximumConcurrency": 25}},
+    )
+
+
+@pytest.mark.parametrize("inject_provider, expected", [(True, "true"), (False, "false")])
+def test_inject_provider_sets_the_lambda_environment(
+    s3_bucket: "Bucket", sqs_queue: "Queue", inject_provider: bool, expected: str
+):
+    template = _template(s3_bucket, sqs_queue, inject_provider=inject_provider)
+
+    template.has_resource_properties(
+        "AWS::Lambda::Function",
+        {"Environment": {"Variables": Match.object_like({"INJECT_PROVIDER": expected})}},
     )
